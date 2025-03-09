@@ -22,7 +22,7 @@ title: R4.01 Architecture Logicielle
 email: frederic.flouvat@univ-amu.fr
 description: >- # this means to ignore newlines until "baseurl:"
   cours du BUT informatique, IUT Aix-en-Provence, Aix-Marseille Université
-baseurl: "/R4.01-Architecture-logicielle" # the subpath of your site, e.g. /blog
+baseurl: "/R4.01-Architecture-logicielle-Pages" # the subpath of your site, e.g. /blog
 url: "https://flouvat.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 #twitter_username: jekyllrb
 github_username:  flouvat
