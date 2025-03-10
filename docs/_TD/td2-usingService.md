@@ -299,11 +299,11 @@ class Controllers
 <img src="td2-img/0-viewError.png" width="800px"/>
 
 
-## Partie 1 - Afficher les entreprises proposant de l'alternance
+## Partie 1 - Afficher les entreprises proposant de d'alternance
 
 Une fois ces transformations effectuées, nous pouvons intégrer le nouveau cas d'usage lié à l'affichage des entreprises susceptibles de proposer de l'alternances en informatique.
 
-La documentation de l'[API Alternance](https://api.gouv.fr/les-api/api-la-bonne-alternance) à utiliser est disponible sur le site [api.gouv.fr](https://api.gouv.fr/). Ce site vise à promouvoir l'utilisation et la diffusion de données open source en mettant à disposition les données de toutes les administrations. La [documentation technique de cette API](https://api.gouv.fr/documentation/api-la-bonne-alternance) présente plusieurs ressources et permet de tester des requêtes. Nous allons plus particulièrement utiliser le point d'accès `https://labonnealternance.apprentissage.beta.gouv.fr/api/V1/jobs` pour récupérer la liste des entreprises proposant des contrats en alternance. Cette liste sera affichée dans l'application Annonces dans une interface graphique dédiée. Cette interface sera accessible par un menu commun à toute l'application.
+La documentation de l'[API Alternance](https://www.data.gouv.fr/fr/dataservices/api-alternance/) à utiliser est disponible sur le site [data.gouv.fr](https://www.data.gouv.fr/fr/dataservices/). Ce site vise à promouvoir l'utilisation et la diffusion de données open source en mettant à disposition les données de toutes les administrations. La [documentation technique de cette API](https://labonnealternance-recette.apprentissage.beta.gouv.fr/api/docs/static/index.html) présente plusieurs ressources et permet de tester des requêtes. Nous allons plus particulièrement utiliser le point d'accès permettant de récupérer la liste des entreprises proposant des contrats en alternance en informatique à proximité (dans un rayon de 100km). Cette liste sera affichée dans l'application Annonces dans une interface graphique dédiée. Cette interface sera accessible par un menu commun à toute l'application.
 
 
 ### 1.1 - Récupérer les informations sur les entreprises à partir de l'API
@@ -311,7 +311,7 @@ La documentation de l'[API Alternance](https://api.gouv.fr/les-api/api-la-bonne-
 
 Nous allons créer maintenant la  classe `ApiAlternance` dans le répertoire `/data`. Cette classe implémente  l'interface `AnnonceAccessInterface`. Cette classe doit donc implémenter les deux méthodes de l'interface: `getAllAnnonces` et `getPost`. 
 
-La méthode `getAllAnnonces` doit consommer les données de l'API REST de l'API Alternance. Comme l'indique la [documentation de l'API](https://api.gouv.fr/documentation/api-la-bonne-alternance), il faut interroger la ressource `API/V1/jobs` en GET en lui envoyant un certain nombre de paramètres. L'URL interrogée sera de la forme `https://labonnealternance-recette.apprentissage.beta.gouv.fr/api/v1/jobs?romes=M1801%2CM1810&caller=contact%40domaine%20nom_de_societe&latitude=43.5283&longitude=5.44973&radius=100&insee=13100`. Elle indique notamment les métiers ciblés (par leur code ROME) et limite la recherche à une certaine zone géographique. L'objectif de la méthode `getAllAnnonces` est de générer cette requête en PHP en ciblant les métiers de l'informatique et une zone de 100km autour d'Aix-en-Provence. Le résultat de cette requête est au format JSON. La méthode parcourt ensuite ce résultat pour construire un tableau d'entreprises susceptibles de prendre des alternants. Ce tableau est ensuite enregistré dans un fichier sur le serveur afin de pouvoir être réutilisé pour afficher le détail d'une entreprise. Cette étape est indispensable car l'API ne permet pas de récupérer les informations d'une entreprise en particulier. En effet, les variables initialisées par la méthode `getAllAnnonces` sont supprimées au rechargement de `index.php`. Il est donc nécessaire d'enregistrer les informations produites par l'API pour qu'elles soient persistantes, et ainsi éviter de devoir tout recharger à chaque fois. Nous créons pour cela un fichier appelé `cache_alternance` dans le répertoire `/data`. Cet encodage d'un objet sous une forme plus petite pour le rendre persistant sous forme de fichier s'appelle de la sérialisation.
+La méthode `getAllAnnonces` doit consommer les données de l'API REST de l'API Alternance. Comme l'indique la [documentation de l'API](https://labonnealternance-recette.apprentissage.beta.gouv.fr/api/docs/static/index.html), il faut interroger la ressource `API/V1/jobsEtFormations` en GET en lui envoyant un certain nombre de paramètres. L'URL interrogée sera de la forme `https://labonnealternance-recette.apprentissage.beta.gouv.fr/api/v1/jobsEtFormations?romes=M1801%2CM1810&caller=contact%40domaine%20nom_de_societe&latitude=43.5283&longitude=5.44973&radius=100&insee=13100&diploma=6%20%28Licence%2C%20BUT...%29`. Elle indique notamment les métiers ciblés (par leur code ROME), limite la recherche à une certaine zone géographique et à une formation. L'objectif de la méthode `getAllAnnonces` est de générer cette requête en PHP en ciblant les métiers de l'informatique (M1801 "Administrateur / Administratrice réseau informatique" et M1810 "Technicien / Technicienne informatique"), une zone de 100km autour d'Aix-en-Provence et un niveau de formation BUT/Licence. Le résultat de cette requête est au format JSON. La méthode parcourt ensuite ce résultat pour construire un tableau d'entreprises susceptibles de prendre des alternants. Ce tableau est ensuite enregistré dans un fichier sur le serveur afin de pouvoir être réutilisé pour afficher le détail d'une entreprise. Cette étape est indispensable car l'API ne permet pas de récupérer les informations d'une entreprise en particulier. En effet, les variables initialisées par la méthode `getAllAnnonces` sont supprimées au rechargement de `index.php`. Il est donc nécessaire d'enregistrer les informations produites par l'API pour qu'elles soient persistantes, et ainsi éviter de devoir tout recharger à chaque fois. Nous créons pour cela un fichier appelé `cache_alternance` dans le répertoire `/data`. Cet encodage d'un objet sous une forme plus petite pour le rendre persistant sous forme de fichier s'appelle de la sérialisation.
 
 
 ```php
@@ -323,12 +323,13 @@ La méthode `getAllAnnonces` doit consommer les données de l'API REST de l'API 
         $longitudeAix = '5.447427';
         $radius = '100';
         $inseeAix = '13100';
+        $diploma = urlencode('6 (Licence, BUT...)');
 
         // URL de l'API
-        $apiUrl = "https://labonnealternance-recette.apprentissage.beta.gouv.fr/api/V1/jobs";
+        $apiUrl = "https://labonnealternance-recette.apprentissage.beta.gouv.fr/api/v1/jobsEtFormations";
 
         // paramètres de la requête HTTP
-        $query ='?romes='.$romes.'&latitude='.$latitudeAix.'&longitude='.$longitudeAix.'&radius='.$radius.'&insee='.$inseeAix.'&caller=contact%40domaine%20nom_de_societe';
+        $query ='?romes='.$romes.'&latitude='.$latitudeAix.'&longitude='.$longitudeAix.'&radius='.$radius.'&insee='.$inseeAix.'&diploma='.$diploma.'&caller=contact%40domaine%20nom_de_societe';
 
         // initialisation de la connexion à l'API avec CURL
         $curlConnection  = curl_init();
@@ -354,7 +355,7 @@ La méthode `getAllAnnonces` doit consommer les données de l'API REST de l'API 
         // parcours du tableau associatif pour extraire les
         // entreprises à fort potentiel de recrutement en alternance dans la région d'Aix
         $annonces = array();
-        foreach ( $response['peJobs']['results'] as $entreprise){
+        foreach ( $response['jobs']['lbaCompanies']['results'] as $entreprise){
 
             $id = $entreprise['company']['siret'];
             $title = $entreprise['title'];
