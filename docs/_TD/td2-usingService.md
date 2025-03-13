@@ -134,7 +134,7 @@ Une fois la méthode `getAllAnnonces` définie, il faut aussi implémenter dans 
 
 ### 1.2 - Créer l'interface de visualisation des entreprises
 
-Tout comme pour les annonces enregistrées dans la base de données interne de l'application, il faut maintenant créer deux vues pour visualiser ces entreprises. Nous allons appeler ces vues: `ViewCompanyAlternance` et `ViewAnnoncesAlternance`.  La première est très similaire à `ViewPost`. La principale différence est la route associée au lien de retour. En effet, cette page doit rediriger vers la route `/annonces/index.php/annoncesAlternance` et non vers `/annonces/index.php/annonces`.  La classe `ViewAnnoncesAlternance` est similaire à `ViewAnnonces`. Elle utilise néanmoins une autre méthode de `Presenter` appelée `getAllAlternanceHTML`. Cette méthode n'existe pas encore et doit être définie dans la classe `Presenter`. Elle génère la liste des entreprises sous forme de liens hypertextes redirigeant vers l'interface d'affichage des détails d'une entreprise (i.e. la vue `ViewCompanyAlternance`).
+Tout comme pour les annonces enregistrées dans la base de données interne de l'application, il faut maintenant créer deux vues pour visualiser ces entreprises. Nous allons appeler ces vues: `ViewCompanyAlternance` et `ViewAnnoncesAlternance`.  La première est très similaire à `ViewPost`. La principale différence est la route associée au lien de retour. En effet, cette page doit rediriger vers la route `/index.php/annoncesAlternance` et non vers `/index.php/annonces`.  La classe `ViewAnnoncesAlternance` est similaire à `ViewAnnonces`. Elle utilise néanmoins une autre méthode de `Presenter` appelée `getAllAlternanceHTML`. Cette méthode n'existe pas encore et doit être définie dans la classe `Presenter`. Elle génère la liste des entreprises sous forme de liens hypertextes redirigeant vers l'interface d'affichage des détails d'une entreprise (i.e. la vue `ViewCompanyAlternance`).
 
 ```php
 <?php
@@ -152,7 +152,7 @@ class ViewCompanyAlternance extends View
 
         $this->content = $presenter->getCurrentPostHTML();
 
-        $this->content .= '<a href="/annonces/index.php/annoncesAlternance">retour</a>';
+        $this->content .= '<a href="/index.php/annoncesAlternance">retour</a>';
     }
 }
 ```
@@ -183,7 +183,7 @@ class ViewAnnoncesAlternance extends View
 Il faut maintenant utiliser ces classes dans `index.php`. Il faut commencer par importer les fichiers des différentes classes,  puis créer une instance de `ApiAlternance`. Ensuite, il faut définir et traiter deux nouvelles routes pour traiter les deux nouvelles fonctionnalités (afficher la liste des entreprises et afficher le détail d'une entreprise). On remarque que le code est très similaire à celui du cas d'utilisation "Afficher les annonces". Il utilise d'ailleurs les mêmes classes et méthodes, dont la classe `AnnoncesChecking`. Seule la source de données est différente (un objet `ApiAlternance` au lieu d'un objet `AnnonceSqlAccess`), tout comme les vues appelées.
 
 ```php
-elseif ( '/annonces/index.php/annoncesAlternance' == $uri ){
+elseif ( '/index.php/annoncesAlternance' == $uri ){
       // Affichage de toutes les entreprises offrant de l'alternance
 
     $controller->annoncesAction($apiAlternance, $annoncesCheck);
@@ -193,7 +193,7 @@ elseif ( '/annonces/index.php/annoncesAlternance' == $uri ){
 
     $vueAnnoncesAlternance->display();
 }
-elseif ( '/annonces/index.php/companyAlternance' == $uri
+elseif ( '/index.php/companyAlternance' == $uri
             && isset($_GET['id'])) {
     // Affichage d'une entreprise offrant de l'alternance
 
@@ -220,10 +220,10 @@ L'affichage des informations sur les entreprises susceptibles d'offrir des contr
 
 <nav>
   <ul>
-    <li><a href="/annonces/index.php">Acceuil</a></li>
-    <li><a href="/annonces/index.php/annonces">Annonces IUT</a></li>
-    <li><a href="/annonces/index.php/annoncesAlternance">Alternance - Pôle Emploi</a></li>
-    <li><a href="/annonces/index.php/logout">Déconnexion</a></li>*
+    <li><a href="/index.php">Acceuil</a></li>
+    <li><a href="/index.php/annonces">Annonces IUT</a></li>
+    <li><a href="/index.php/annoncesAlternance">Alternance - Pôle Emploi</a></li>
+    <li><a href="/index.php/logout">Déconnexion</a></li>*
   </ul>
 </nav>
 
@@ -233,7 +233,7 @@ L'affichage des informations sur les entreprises susceptibles d'offrir des contr
 </html>
 ```
 
-Dans `index.php`, le nom de ce fichier est passé en paramètre des instances de `Layout` correspondant à des fenêtres affichées lorsque l'on est connecté. Il s'agit plus particulièrement du code associé aux routes: `/annonces/index.php/annoncesAlternance`, `/annonces/index.php/companyAlternance`, `/annonces/index.php/annonces` et `/annonces/index.php/post`.  A noter qu'une route `/annonces/index.php/logout` a été créée au passage. Elle est associée à la suppression de la session (`session_destroy`) et à l'affichage du formulaire de connexion.  
+Dans `index.php`, le nom de ce fichier est passé en paramètre des instances de `Layout` correspondant à des fenêtres affichées lorsque l'on est connecté. Il s'agit plus particulièrement du code associé aux routes: `/index.php/annoncesAlternance`, `/index.php/companyAlternance`, `/index.php/annonces` et `/index.php/post`.  A noter qu'une route `/index.php/logout` a été créée au passage. Elle est associée à la suppression de la session (`session_destroy`) et à l'affichage du formulaire de connexion.  
 
 <img src="td2-img/1-index.png" width="800px"/>
 
@@ -251,7 +251,7 @@ La première étape consiste donc à [créer son espace sur le site pole-emploi.
 
 <img src="td2-img/2-creerCompte.png" width="800px"/>
 
-Une fois le compte créé, un mail d'activation vous est envoyé pour valider ce dernier. Vous pouvez ensuite vous connecter et aller dans votre espace pour créer une application. Il faut saisir le nom de son application, une petite description, et l'URL à partir de laquelle l'application va accéder à l'API (`https://[mon_compte].alwaysdata.net/annonces/index.php`).
+Une fois le compte créé, un mail d'activation vous est envoyé pour valider ce dernier. Vous pouvez ensuite vous connecter et aller dans votre espace pour créer une application. Il faut saisir le nom de son application, une petite description, et l'URL à partir de laquelle l'application va accéder à l'API (`https://[mon_compte].alwaysdata.net/index.php`).
 
 <img src="td2-img/2-creationAppli.png" width="800px"/>
 
@@ -326,7 +326,7 @@ La principale différence avec l'API précédente est qu'il faut générer le je
 
 ### 2.3 - Créer l'interface de visualisation des emplois
 
-Une fois cette classe définie, il faut procéder comme dans la partie précédente. Il faut créer une vue `ViewAnnoncesEmploi` dans `/gui`, puis ajouter dans la classe `Presenter` une méthode `getAllEmploiHTML` (qui sera utilisée dans la vue pour récupérer les annonces à afficher au format HTML), et instancier ces classes dans `index.php` pour définir une nouvelle route `/annonces/index.php/annoncesEmploi`.
+Une fois cette classe définie, il faut procéder comme dans la partie précédente. Il faut créer une vue `ViewAnnoncesEmploi` dans `/gui`, puis ajouter dans la classe `Presenter` une méthode `getAllEmploiHTML` (qui sera utilisée dans la vue pour récupérer les annonces à afficher au format HTML), et instancier ces classes dans `index.php` pour définir une nouvelle route `/index.php/annoncesEmploi`.
 
 <img src="td2-img/2-viewAnnoncesEmploi.png" width="800px"/>
 <img src="td2-img/2-presenter.png" width="800px"/>
@@ -334,7 +334,7 @@ Une fois cette classe définie, il faut procéder comme dans la partie précéde
 
 Nous allons également ajouter un lien vers cette liste d'annonces dans le menu de l'application situé dans `layoutLogged.html`.
 
-Tout comme avec l'API de la partie 1, nous devons aussi définir la méthode  `getPost` dans la classe `ApiEmploi`. Cette méthode sera utilisée pour afficher le détail d'une offre d'emploi. On remarque dans la capture d'écran précédente que la route vers cette partie de l'application a déjà été préparée dans la vue `ViewAnnoncesEmploi`. En effet, on voit la génération de liens hypertextes pour chaque offre redirigeant vers `/annonces/index.php/offreEmploi?id=`. 
+Tout comme avec l'API de la partie 1, nous devons aussi définir la méthode  `getPost` dans la classe `ApiEmploi`. Cette méthode sera utilisée pour afficher le détail d'une offre d'emploi. On remarque dans la capture d'écran précédente que la route vers cette partie de l'application a déjà été préparée dans la vue `ViewAnnoncesEmploi`. En effet, on voit la génération de liens hypertextes pour chaque offre redirigeant vers `/index.php/offreEmploi?id=`. 
 
 ```php
   public function getPost($id)
@@ -382,7 +382,7 @@ Il faut  ensuite créer une vue `ViewOffreEmploi` pour afficher les informations
 
 ### 2.4 - Mettre à jour le contrôleur frontal 
 
-Pour finir, il faut instancier ces classes dans `index.php` et associée cette partie à la nouvelle route `/annonces/index.php/offreEmploi`.
+Pour finir, il faut instancier ces classes dans `index.php` et associée cette partie à la nouvelle route `/index.php/offreEmploi`.
 
 
 <img src="td2-img/2-index2.png" width="800px"/>
@@ -432,7 +432,7 @@ class ViewCreateAnnonce extends View
         $this->title = 'Exemple Annonces Basic PHP: Création d\'une annonce';
 
         $this->content = ' 
-            <form method="post" action="/annonces/index.php/annonces">
+            <form method="post" action="/index.php/annonces">
                 <label for="title"> Titre </label> :
                 <input type="text" name="title" id="title" placeholder="defaut" required />
                 <br />           
@@ -457,13 +457,13 @@ class ViewCreateAnnonce extends View
                 <input type="submit" value="Envoyer">
                 <input type="reset"> 
             </form>
-            <a href="/annonces/index.php/annonces">retour</a>
+            <a href="/index.php/annonces">retour</a>
             ';
     }
 }
 ```
 
-L'affichage de ce formulaire est associé à la route  `/annonces/index.php/createAnnonce` dans `index.php.`
+L'affichage de ce formulaire est associé à la route  `/index.php/createAnnonce` dans `index.php.`
 
 <img src="td2-img/3-indexCreateAnnonce.png" width="800px"/>
 
@@ -474,7 +474,7 @@ Par ailleurs, pour le rendre plus facilement accessible, nous ajoutons un lien h
 
 ### 3.3 - Ajouter l'annonce dans la base de données
 
-La destination de ce formulaire est `/annonces/index.php/annonces`. Il faut donc ajouter son traitement (la création de l'annonce) dans `index.php` dans la partie du code correspondant à cette route. Pour cela, nous allons créer une nouvelle classe `AnnonceCreation` dans `/service`  correspondant à ce cas d'utilisation.  Cette classe utilisera la classe `AnnonceSqlAccess` pour enregistrer les  informations dans la base de données. Il faut donc d'abord ajouter une méthode `createAnnonce`  dans `AnnonceSqlAccess` pour faire l'insertion dans la base de données. Cette fonction prend en paramètre l'identifiant de l'utilisateur et  un tableau associatif avec toutes les informations à enregistrer.
+La destination de ce formulaire est `/index.php/annonces`. Il faut donc ajouter son traitement (la création de l'annonce) dans `index.php` dans la partie du code correspondant à cette route. Pour cela, nous allons créer une nouvelle classe `AnnonceCreation` dans `/service`  correspondant à ce cas d'utilisation.  Cette classe utilisera la classe `AnnonceSqlAccess` pour enregistrer les  informations dans la base de données. Il faut donc d'abord ajouter une méthode `createAnnonce`  dans `AnnonceSqlAccess` pour faire l'insertion dans la base de données. Cette fonction prend en paramètre l'identifiant de l'utilisateur et  un tableau associatif avec toutes les informations à enregistrer.
 
 ```php
 public function createAnnonce($login, $info)
@@ -511,7 +511,7 @@ Une fois cette fonction ajoutée, nous pouvons l'utiliser dans la classe `Annonc
     }
 ```
 
-Nous ajoutons ensuite dans `index.php` l'appel à ce cas d'utilisation. Il est effectué lorsque la route `/annonces/index.php/annonces` est appelée (car il s'agit de la destination du formulaire de création). Il faut tout de même détecter si l'appel à cette route a été effectué par le formulaire de création (et non par le menu ou suite à la connexion). Pour cela, nous pouvons utiliser `isset($_GET['contractType'])` car cette variable est seulement définie quand le formulaire de création a été envoyé.
+Nous ajoutons ensuite dans `index.php` l'appel à ce cas d'utilisation. Il est effectué lorsque la route `/index.php/annonces` est appelée (car il s'agit de la destination du formulaire de création). Il faut tout de même détecter si l'appel à cette route a été effectué par le formulaire de création (et non par le menu ou suite à la connexion). Pour cela, nous pouvons utiliser `isset($_GET['contractType'])` car cette variable est seulement définie quand le formulaire de création a été envoyé.
 
 <img src="td2-img/3-index.png" width="800px"/>
 
