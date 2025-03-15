@@ -242,12 +242,12 @@ Dans `index.php`, le nom de ce fichier est passé en paramètre des instances de
 
 ## Partie 2 - Afficher les annonces d'emploi de Pôle Emploi
 
-Dans cette seconde partie, nous allons ajouter dans notre application l'affichage des annonces disponibles à Pôle Emploi. Pour cela, nous allons consommer l'[API Offres d'emploi](https://pole-emploi.io/data/api/offres-emploi?tabgroup-api=presentation&doc-section=api-doc-section-caracteristiques). Contrairement à la première API, il faut être au préalable enregistré sur le site Pôle Emploi pour utiliser ces données. Il faut ensuite identifier son application, et  souscrire à une des API publiées pour obtenir un identifiant ainsi qu'une clé secrète. Par ailleurs, il est nécessaire de générer un jeton ("access token", encore appelé "bearer token") avant de pouvoir effectuer une requête. L'ensemble de la procédure est décrit dans la [documentation technique de cette API](https://pole-emploi.io/data/documentation).
+Dans cette seconde partie, nous allons ajouter dans notre application l'affichage des annonces disponibles à Pôle Emploi. Pour cela, nous allons consommer l'[API Offres d'emploi](https://francetravail.io/data/api/offres-emploi?tabgroup-api=presentation&doc-section=api-doc-section-caracteristiques). Contrairement à la première API, il faut être au préalable enregistré sur le site Pôle Emploi pour utiliser ces données. Il faut ensuite identifier son application, et  souscrire à une des API publiées pour obtenir un identifiant ainsi qu'une clé secrète. Par ailleurs, il est nécessaire de générer un jeton ("access token", encore appelé "bearer token") avant de pouvoir effectuer une requête. L'ensemble de la procédure est décrit dans la [documentation technique de cette API](https://francetravail.io/data/documentation).
 
 
 ### 2.1 - Créer un compte sur l'API Pôle Emploi et enregistrer son application
 
-La première étape consiste donc à [créer son espace sur le site pole-emploi.io](https://pole-emploi.io/inscription).
+La première étape consiste donc à [créer son espace sur le site pole-emploi.io](https://francetravail.io/inscription).
 
 <img src="td2-img/2-creerCompte.png" width="800px"/>
 
@@ -259,14 +259,14 @@ Lorsque l'application est enregistrée, le site vous affiche l'identifiant et la
 
 <img src="td2-img/2-monAppli.png" width="800px"/>
 
-Avant d'intégrer cela dans notre code, il faut encore ajouter des API dans la liste des API autorisées pour notre application. Nous allons ajouter l'API "Offres d'emploi", qui permet d'accéder à tout moment et en temps réel à l’ensemble des offres d’emploi disponibles sur le site de Pôle emploi. A ce niveau, la plateforme permet de visualiser la [documentation technique de cette API](https://pole-emploi.io/data/api/offres-emploi?tabgroup-api=documentation&doc-section=api-doc-section-rechercher-par-crit%C3%A8res) en particulier, et donc de voir comment accéder et utiliser cette ressource (URI, paramètre des requêtes, etc.). Gardez cette fenêtre ouverte car elle vous sera utile par la suite.
+Avant d'intégrer cela dans notre code, il faut encore ajouter des API dans la liste des API autorisées pour notre application. Nous allons ajouter l'API "Offres d'emploi", qui permet d'accéder à tout moment et en temps réel à l’ensemble des offres d’emploi disponibles sur le site de Pôle emploi. A ce niveau, la plateforme permet de visualiser la [documentation technique de cette API](https://francetravail.io/data/api/offres-emploi?tabgroup-api=documentation&doc-section=api-doc-section-rechercher-par-crit%C3%A8res) en particulier, et donc de voir comment accéder et utiliser cette ressource (URI, paramètre des requêtes, etc.). Gardez cette fenêtre ouverte car elle vous sera utile par la suite.
 
 <img src="td2-img/2-docAPI.png" width="800px"/>
 
 ### 2.2 - Récupérer les informations sur les emplois à partir de l'API 
 
 
-Nous allons maintenant pouvoir intégrer ce nouveau cas d'utilisation dans notre code. Tout comme précédemment, nous allons commencer par ajouter une nouvelle classe `ApiEmploi` dans le répertoire `/data`. Cette classe implémente l'interface `AnnonceAccessInterface`, et doit donc en implémenter les deux méthodes `getAllAnnonces` et `getPost`. Avant d'implémenter ces méthodes, nous allons créer dans cette classe une méthode `getToken()` afin de récupérer un jeton d'accès de l'API. Comme indiqué dans la documentation de [auth0](https://auth0.com/docs/secure/tokens/access-tokens), ces jetons sont utilisés pour permettre à une application d'accéder à une API. On parle d'authentification basée sur les jetons. L'application reçoit un jeton d'accès une fois qu'un utilisateur s'est authentifié avec succès, puis transmet le jeton d'accès en tant qu'information d'identification lorsqu'il appelle l'API cible. Ce jeton informe l'API que l'application a été autorisée à accéder à celle-ci et à effectuer les actions  spécifiées. Pour récupérer ce jeton, il faut faire une requête HTTP dont les paramètres sont décrits dans [la documentation de l'API (partie "Générer un access token")](https://pole-emploi.io/data/documentation/utilisation-api-pole-emploi/generer-access-token).
+Nous allons maintenant pouvoir intégrer ce nouveau cas d'utilisation dans notre code. Tout comme précédemment, nous allons commencer par ajouter une nouvelle classe `ApiEmploi` dans le répertoire `/data`. Cette classe implémente l'interface `AnnonceAccessInterface`, et doit donc en implémenter les deux méthodes `getAllAnnonces` et `getPost`. Avant d'implémenter ces méthodes, nous allons créer dans cette classe une méthode `getToken()` afin de récupérer un jeton d'accès de l'API. Comme indiqué dans la documentation de [auth0](https://auth0.com/docs/secure/tokens/access-tokens), ces jetons sont utilisés pour permettre à une application d'accéder à une API. On parle d'authentification basée sur les jetons. L'application reçoit un jeton d'accès une fois qu'un utilisateur s'est authentifié avec succès, puis transmet le jeton d'accès en tant qu'information d'identification lorsqu'il appelle l'API cible. Ce jeton informe l'API que l'application a été autorisée à accéder à celle-ci et à effectuer les actions  spécifiées. Pour récupérer ce jeton, il faut faire une requête HTTP dont les paramètres sont décrits dans [la documentation de l'API (partie "Générer un access token")](https://francetravail.io/data/documentation/utilisation-api-pole-emploi/generer-access-token).
 
 <img src="td2-img/2-accessToken.png" width="800px"/>
 
@@ -274,7 +274,7 @@ Nous allons maintenant pouvoir intégrer ce nouveau cas d'utilisation dans notre
 function getToken(){
         $curl = curl_init();
 
-        $url = "https://entreprise.pole-emploi.fr/connexion/oauth2/access_token";
+        $url = "https://entreprise.francetravail.fr/connexion/oauth2/access_token";
 
         $auth_data = array(
             "grant_type" => "client_credentials",
@@ -306,7 +306,7 @@ function getToken(){
     }
 ```
 
-Comme indiqué dans la documentation, le point d'accès pour avoir ce jeton est `https://entreprise.pole-emploi.fr/connexion/oauth2/access_token` (accès en POST). La requête HTTP envoyée doit avoir comme paramètre suite à cette URL la valeur `realm=/partenaire`. Dans le code ci-dessus, cette information est mise au niveau du paramètre `CURL_OPT`. A noter que le caractère `/` a été remplacé par `%2F` (son code d'encodage) car il s'agit d'un caractère spécial. L'en-tête  `content-type: application/x-www-form-urlencoded` a été associée à l'option `CURLOPT_HTTPHEADER` de cURL. Le corps de la requête POST, correspondant aux informations d'authentification demandées par cette API, a été stocké sous forme de tableau associatif `$auth_data`, puis encodé pour être compatible avec les conventions des URL, et associé au paramètre `CURLOPT_POSTFIELDS` de cURL. Le paramètre `CURLOPT_RETURNTRANSFER` initialisé à `true`, permet quant à lui de demander une réponse sous forme de chaîne de caractères. Comme indiqué dans la documentation, cette réponse sera plus particulièrement au format JSON (`application/json`). Ces paramètres sont ensuite associés à la requête cURL (`curl_setopt_array`). Puis, cette dernière est exécutée (`curl_exec`) et la connexion est fermée (`curl_close`). La fonction retourne un tableau associatif avec les informations de la chaîne de caractères JSON renvoyée par l'API (`json_decode`). 
+Comme indiqué dans la documentation, le point d'accès pour avoir ce jeton est `https://entreprise.francetravail.fr/connexion/oauth2/access_token` (accès en POST). La requête HTTP envoyée doit avoir comme paramètre suite à cette URL la valeur `realm=/partenaire`. Dans le code ci-dessus, cette information est mise au niveau du paramètre `CURL_OPT`. A noter que le caractère `/` a été remplacé par `%2F` (son code d'encodage) car il s'agit d'un caractère spécial. L'en-tête  `content-type: application/x-www-form-urlencoded` a été associée à l'option `CURLOPT_HTTPHEADER` de cURL. Le corps de la requête POST, correspondant aux informations d'authentification demandées par cette API, a été stocké sous forme de tableau associatif `$auth_data`, puis encodé pour être compatible avec les conventions des URL, et associé au paramètre `CURLOPT_POSTFIELDS` de cURL. Le paramètre `CURLOPT_RETURNTRANSFER` initialisé à `true`, permet quant à lui de demander une réponse sous forme de chaîne de caractères. Comme indiqué dans la documentation, cette réponse sera plus particulièrement au format JSON (`application/json`). Ces paramètres sont ensuite associés à la requête cURL (`curl_setopt_array`). Puis, cette dernière est exécutée (`curl_exec`) et la connexion est fermée (`curl_close`). La fonction retourne un tableau associatif avec les informations de la chaîne de caractères JSON renvoyée par l'API (`json_decode`). 
 
 Vous pouvez tester cette fonction, et afficher le jeton généré, en copiant  le code suivant dans `index.php`. Une fois ce test effectué, vous mettrez cette fonction `getToken` en privé dans la classe  `ApiEmploi`.
 
@@ -317,7 +317,7 @@ $token = $apiEmploi->getToken() ;
 echo $token['access_token'];
 ```
 
-Nous pouvons maintenant utiliser cette fonction pour générer un jeton d'authentification dans la méthode `getAllAnnonces` et pouvoir faire ainsi une requête GET à l'API pour récupérer les offres d'emploi en informatique. Le point d'entrée de l'[API Offres d'emploi](https://pole-emploi.io/data/api/offres-emploi?tabgroup-api=documentation&doc-section=api-doc-section-caracteristiques) est `https://api.pole-emploi.io/partenaire/offresdemploi/v2/offres/search`. Cette API offre un grand nombre de paramètres d'entrée pour filtrer les offres. Nous allons utiliser le paramètre `sort=1` pour trier par date de création décroissante,  et le paramètre `domaine=M18` représentant les offres portant sur le domaine des systèmes d'information et de télécommunication.
+Nous pouvons maintenant utiliser cette fonction pour générer un jeton d'authentification dans la méthode `getAllAnnonces` et pouvoir faire ainsi une requête GET à l'API pour récupérer les offres d'emploi en informatique. Le point d'entrée de l'[API des offres d'emploi](https://francetravail.io/produits-partages/catalogue/offres-emploi/documentation#/api-reference/operations/recupererListeOffre) est `https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search`. Cette API offre un grand nombre de paramètres d'entrée pour filtrer les offres. Nous allons utiliser le paramètre `sort=1` pour trier par date de création décroissante,  et le paramètre `domaine=M18` représentant les offres portant sur le domaine des systèmes d'information et de télécommunication.
 
 <img src="td2-img/2-getAllAnnonces1.png" width="800px"/>
 <img src="td2-img/2-getAllAnnonces2.png" width="800px"/>
@@ -341,7 +341,7 @@ Tout comme avec l'API de la partie 1, nous devons aussi définir la méthode  `g
     {
         $token = $this->getToken() ;
 
-        $api_url = "https://api.pole-emploi.io/partenaire/offresdemploi/v2/offres/";
+        $api_url = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/";
 
         $curlConnection  = curl_init();
         $params = array(
@@ -374,7 +374,8 @@ Tout comme avec l'API de la partie 1, nous devons aussi définir la méthode  `g
     }
 ```
 
-Par contre, contrairement à la précédente API, l'API Offres Emploi permet de récupérer les informations d'une seule offre. Pour cela, il suffit d'interroger la ressource [https://api.pole-emploi.io/partenaire/offresdemploi/v2/offres/{offerId}](https://pole-emploi.io/data/api/offres-emploi?tabgroup-api=documentation&doc-section=api-doc-section-consulter-une-offre). Il n'est donc plus nécessaire de sérialiser les objets pour les stocker sur le disque. Nous pouvons directement interroger cette ressource, comme cela a été fait dans la méthode `getAllAnnonces` (i.e. en générant un jeton d'authentification et en envoyant la requête GET).
+Par contre, contrairement à la précédente API, l'API Offres Emploi permet de récupérer les informations d'une seule offre. Pour cela, il suffit d'interroger la ressource [https://api.francetravail.io/partenaire/offresdemploi
+/v2/offres/{id}](https://francetravail.io/produits-partages/catalogue/offres-emploi/documentation#/api-reference/operations/recupererOffre). Il n'est donc plus nécessaire de sérialiser les objets pour les stocker sur le disque. Nous pouvons directement interroger cette ressource, comme cela a été fait dans la méthode `getAllAnnonces` (i.e. en générant un jeton d'authentification et en envoyant la requête GET).
 
 Il faut  ensuite créer une vue `ViewOffreEmploi` pour afficher les informations détaillées de chaque offre d'emploi.
 
@@ -391,7 +392,7 @@ Pour finir, il faut instancier ces classes dans `index.php` et associée cette p
 
 ## Partie 3 - Ajouter des annonces avec détection de la ville
 
-Dans cette partie, nous allons rapidement ajouter la possibilité d'ajouter une annonce (stage, alternance ou emploi). Afin de faciliter la saisie de la localisation de l'offre, nous intègrerons dans le formulaire un bouton permettant à l'utilisateur de détecter automatiquement  la ville dans laquelle il se trouve. Cette fonctionnalité s'appuiera sur une API pour récupérer le nom de la ville à partir de coordonnées GPS.
+Dans cette partie, nous allons rapidement ajouter la possibilité d'ajouter une annonce (stage, alternance ou emploi). Afin de faciliter la saisie de la localisation de l'offre, nous intégrerons dans le formulaire un bouton permettant à l'utilisateur de détecter automatiquement  la ville dans laquelle il se trouve. Cette fonctionnalité s'appuiera sur une API pour récupérer le nom de la ville à partir de coordonnées GPS.
 
 ### 3.1 - Compléter les informations sur les annonces dans la base de données
 
