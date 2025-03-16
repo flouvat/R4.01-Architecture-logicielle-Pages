@@ -17,7 +17,7 @@ La première appelée `book` aura pour objectif de publier  les livres disponibl
 
 La deuxième application appelée `user` publiera les informations sur les utilisateurs enregistrés. Elle implémentera aussi le mécanisme d'authentification.
 
-La troisième application appelée `reservation` gèrera les réservations de livres par les utilisateurs. Elle permettra de faire des réservations ou de les supprimer. Pour cela, elle consommera les données publiées par les deux autres applications.
+La troisième application appelée `reservation` gérera les réservations de livres par les utilisateurs. Elle permettra de faire des réservations ou de les supprimer. Pour cela, elle consommera les données publiées par les deux autres applications.
 
 
 
@@ -26,7 +26,7 @@ La troisième application appelée `reservation` gèrera les réservations de li
 
 ### 1.1 Création du projet
 
-Pour cette étape, nous allons simplement suivre le [tutoriel "Your first RESTful web service"](https://www.jetbrains.com/help/idea/creating-and-running-your-first-restful-web-service.html) proposé sur le site de IntelliJ. 
+Pour cette étape, nous allons simplement suivre le [tutoriel "Your first RESTful web service"](https://www.jetbrains.com/help/idea/creating-and-running-your-first-restful-web-service.html?section=GlassFish) proposé sur le site de IntelliJ. 
 
 **Attention**, il faut télécharger le [serveur GlassFish (**Web Profile**)](https://glassfish.org/download) avant de commencer ce tutoriel (prérequis). Une fois l'archive téléchargée, il suffit de la décompresser pour pouvoir utiliser le serveur d'applications.
 
@@ -36,7 +36,12 @@ Dans la fenêtre de création du projet, on adapte aussi le nom du projet, et le
 
 Dans la liste des dépendances qui suit, on laisse les dépendances par défaut (i.e. `CDI`, `JAX-RS` et `Servlet`) et on ajoute les dépendances à `JSON-B`, `JSON-P` et `JPA`.  Puis, on créé le projet. 
 
-A cette étape, il faut encore configurer le serveur d'applications, et définir une configuration d'exécution,  **comme indiqué dans le tutoriel**. Pour configurer le serveur d'applications, il faut aller dans la configuration du projet, i.e. `Settings` (File > Settings...). Il faut sélectionner `Build, Execution, Deployment | Application Servers`, cliquer sur `+` et choisir  `Glassfish Server`. Il faut ensuite  indiquer le répertoire où vous avez décompressé GlassFish.
+A cette étape, il faut encore configurer le serveur d'applications GlassFish, et définir une configuration d'exécution,  **comme indiqué dans le tutoriel**. 
+Avant cela, il faut installer le `plugin GlassFish` dans IntelliJ à partir du panneau de configuration du projet, i.e. aller dans `Settings` (File > Settings...) et sélectionner `Plugins`.
+
+<img src="td3-img/1-installGlassFishPlugin.png" width="500px"/>
+
+Toujours dans le panneau de configuration du projet, il faut maintenant définir le serveur d'applications. Pour cela, il faut sélectionner `Build, Execution, Deployment | Application Servers`, cliquer sur `+` et choisir  `Glassfish Server`. Il faut ensuite  indiquer le répertoire où vous avez décompressé GlassFish.
 
 <img src="td3-img/1-configServer.png" width="500px"/>
 
