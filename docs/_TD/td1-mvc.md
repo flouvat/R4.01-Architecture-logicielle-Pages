@@ -1440,3 +1440,13 @@ class Controllers
 Le diagramme de classes suivant représente l'architecture de l'application à la fin du TD.
 
 <img src="td1-img/diagClassesFinal.jpg" width="800px"/>
+
+## Partie 4 -  Utilisation d'une IA générative pour construire l'architecture
+
+Dans cette partie, vous allez comparer l'architecture construite avec celle générée par une IA générative (le choix du modèle est libre).
+
+Dans un premier temps, vous allez écrire (ou générer) un prompt demandant à l'IA de vous générer le code de l'application précédente (à partir de rien, sans donner en entrée le sujet du TD). Vous spécifierez que l'application devra suivre une architecture MVC et appliquer les principes d'architecture propre.
+
+Dans un second temps, vous analyserez et discuterez l'architecture produite par l'IA générative et celle produite à la fin du TD.
+
+Les diagrammes de classes des deux architectures et l'analyse de leurs différences seront mis dans un document PDF et uploadé sur Ametice.
