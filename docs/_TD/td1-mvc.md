@@ -105,6 +105,28 @@ Avant cela, il faut tout de même corriger un certain nombre de problèmes dans 
 
 Dans les fichiers `annonces.php` et `post.php`, vous devez plus particulièrement modifier les paramètres de la fonction [`mysqli_connect`](https://www.php.net/manual/fr/function.mysqli-connect.php).
 
+Afin d'améliorer la sécurité du code, vous isolerez ensuite les paramètres de connexion à la base de données dans un fichier `config.php` qui suivra le modèle suivant.
+
+```php
+<?php
+/**
+ * Fichier de configuration
+ * Le fichier config.php ne doit JAMAIS être versionné
+ */
+
+// Configuration de la base de données
+define('DB_HOST', 'localhost');
+define('DB_USER', 'votre_utilisateur');
+define('DB_PASS', 'votre_mot_de_passe');
+define('DB_NAME', 'blog_db');
+
+?>
+```
+
+Ce fichier ne devra pas être versionné par Git pour éviter de diffuser ces informations. Pour cela, il vous faut créer un fichier `.gitignore` et l'intégrer à l'intérieur.
+
+Il vous suffit ensuite d'importer le fichier `config.php` dans le code PHP faisant des connexions à la base de données et de remplacer toutes les informations de connexion par les constantes définies dans `config.php`.
+
 
 ## Partie 2 -  Mise en place du patron MVC
 
@@ -1147,4 +1169,271 @@ Il faut maintenant faire de même pour les autres classes et créer leur espace 
 
  <img src="td1-img/phpstorm-dataAccessFinal.png" width="800px"/>
 
- Notre application est finie. Elle reste très basique fonctionnellement mais elle implémente le patron MVC et les principes des architectures propres, ce qui la rend notamment  plus facile à faire évoluer.
+ Nous obtenons ainsi une première version de application implémentant le patron MVC et les principes des architectures propres.  Elle reste très basique fonctionnellement mais cette architecture la rend notamment  plus facile à faire évoluer.
+
+ ### 6 - Isoler le cas d'utilisation "authentifier un utilisateur"
+
+A ce sujet, une analyse de l'architecture actuelle  mais en avant une limite liée à l'authentification des utilisateurs. Cette dernière est intégrée au cas d'utilisation "afficher les annonces" alors qu'elle devrait être indépendante. En effet, l'authentification est l'étape préalable à l'utilisation de toutes les  fonctionnalités (actuelles ou futures) de l'outil et pas seulement du cas d'utilisation "afficher les annonces". 
+
+Nous allons donc séparer authentification des utilisateurs et affichage des annonces.
+
+Pour cela, vous commencez par créer dans `/service` une classe `UserChecking`. On **déplace** ensuite dans cette classe la méthode `authenticate` qui était initialement dans la classe `AnnoncesChecking`. 
+
+```php
+<?php
+
+namespace service;
+
+class UserChecking
+{
+    public function authenticate($login, $password, $data)
+    {
+        return ($data->getUser($login, $password) != null);
+    }
+
+}
+```
+
+<img src="td1-img/11-annoncesChecking.png" width="800px"/>
+
+
+Nous allons ensuite ajouter une interface `UserAccessInterface` dans le répertoire `/service` pour séparer également l'accès aux données des utilisateurs. On **déplace** dans cette classe la méthode `getUser`, qui était initialement dans l'interface  `DataAccessInterface`. On en profitera pour renommer (Refactor > Rename) l'interface `DataAccessInterface` en `AnnonceAccessInterface`, afin que son nom reflète mieux son usage actuel.
+
+```php
+<?php
+
+namespace service;
+
+interface UserAccessInterface
+{
+    public function getUser($login, $password);
+}
+```
+<img src="td1-img/11-annonceAccessInterface.png" width="800px"/>
+
+Nous allons faire de même pour la classe `DataAccess` dans `/data` et la renommer `AnnonceSqlAccess`. Nous allons par ailleurs créer dans ce répertoire `/data` la classe `UserSqlAccess`  dans laquelle nous déplacerons le code associé aux utilisateurs (p.ex. `getUser`).
+
+
+```php
+<?php
+
+namespace data;
+
+use service\UserAccessInterface;
+include_once "service/UserAccessInterface.php";
+
+use domain\User;
+include_once "domain/User.php";
+
+class UserSqlAccess implements UserAccessInterface
+{
+    protected $dataAccess = null;
+
+    public function __construct($dataAccess)
+    {
+        $this->dataAccess = $dataAccess;
+    }
+
+    public function __destruct()
+    {
+        $this->dataAccess = null;
+    }
+
+    public function getUser($login, $password)
+    {
+        $user = null;
+
+        $query = 'SELECT * FROM Users WHERE login="' . $login . '" and password="' . $password . '"';
+        $result = $this->dataAccess->query($query);
+
+        if ( $row = $result->fetch() )
+            $user = new User( $row['login'] , $row['password'], $row['name'], $row['firstName'], $row['date'] );
+
+        $result->closeCursor();
+
+        return $user;
+    }
+}
+```
+
+<img src="td1-img/11-annonceSqlAccess.png" width="800px"/>
+
+
+Il faut maintenant modifier le contrôleur frontal `index.php` pour exploiter ces nouvelles classes et les passer en paramètres des bons objets. Nous allons en profiter pour généraliser l'authentification et mettre en place des sessions (si cela n'a pas été fait pendant le TP1). 
+
+```php
+<?php
+
+// charge et initialise les bibliothèques globales
+include_once 'data/AnnonceSqlAccess.php';
+include_once 'data/UserSqlAccess.php';
+
+include_once 'control/Controllers.php';
+include_once 'control/Presenter.php';
+
+include_once 'service/AnnoncesChecking.php';
+include_once 'service/UserChecking.php';
+
+include_once 'gui/Layout.php';
+include_once 'gui/ViewLogin.php';
+include_once 'gui/ViewAnnonces.php';
+include_once 'gui/ViewPost.php';
+include_once 'gui/ViewError.php';
+include_once 'gui/ViewCreate.php';
+
+use gui\{ViewLogin, ViewAnnonces, ViewPost, ViewError, Layout};
+use control\{Controllers, Presenter};
+use data\{AnnonceSqlAccess, UserSqlAccess};
+use service\{AnnoncesChecking, UserChecking};
+
+$data = null;
+try {
+    // initialisation de la connexion à la bd
+    $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME;
+    $bd = new PDO($dsn, DB_USER, DB_PASS) );  
+    
+    // construction du modèle
+    $dataAnnonces = new AnnonceSqlAccess($bd);
+    $dataUsers = new UserSqlAccess($bd);
+
+} catch (PDOException $e) {
+    print "Erreur de connexion !: " . $e->getMessage() . "<br/>";
+    die();
+}
+
+// initialisation du controller
+$controller = new Controllers();
+
+// intialisation du cas d'utilisation service\AnnoncesChecking
+$annoncesCheck = new AnnoncesChecking() ;
+
+// intialisation du cas d'utilisation service\UserChecking
+$userCheck = new UserChecking() ;
+
+// intialisation du presenter avec accès aux données de AnnoncesCheking
+$presenter = new Presenter($annoncesCheck);
+
+// chemin de l'URL demandée au navigateur
+// (p.ex. /annonces/index.php)
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// définition d'une session d'une heure
+ini_set('session.gc_maxlifetime', 3600);
+session_set_cookie_params(3600);
+session_start();
+
+// Authentification et création du compte (sauf pour le formulaire de connexion et la route de déconnexion)
+if ( '/annonces/' != $uri and '/annonces/index.php' != $uri and '/annonces/index.php/logout' != $uri ){
+
+    $error = $controller->authenticateAction($userCheck, $dataUsers);
+
+    if( $error != null )
+    {
+        $uri='/annonces/index.php/error' ;
+        if( $error == 'bad login or pwd' or $error == 'not connected')
+            $redirect = '/annonces/index.php';
+    }
+}
+
+// route la requête en interne
+// i.e. lance le bon contrôleur en fonction de la requête effectuée
+if ( '/annonces/' == $uri || '/annonces/index.php' == $uri || '/annonces/index.php/logout' == $uri) {
+    // affichage de la page de connexion
+
+    session_destroy();
+    $layout = new Layout("gui/layout.html" );
+    $vueLogin = new ViewLogin( $layout );
+
+    $vueLogin->display();
+}
+elseif ( '/annonces/index.php/annonces' == $uri ){
+    // affichage de toutes les annonces
+
+    $controller->annoncesAction($dataAnnonces, $annoncesCheck);
+
+    $layout = new Layout("gui/layout.html" );
+    $vueAnnonces= new ViewAnnonces( $layout,  $_SESSION['login'], $presenter);
+
+    $vueAnnonces->display();
+}
+elseif ( '/annonces/index.php/post' == $uri
+            && isset($_GET['id'])) {
+    // Affichage d'une annonce
+
+    $controller->postAction($_GET['id'], $dataAnnonces, $annoncesCheck);
+
+    $layout = new Layout("gui/layout.html" );
+    $vuePost= new ViewPost( $layout,  $_SESSION['login'], $presenter );
+
+    $vuePost->display();
+}
+elseif ( '/annonces/index.php/error' == $uri ){
+    // Affichage d'un message d'erreur
+
+    $layout = new Layout("gui/layout.html" );
+    $vueError = new ViewError( $layout, $error, $redirect );
+
+    $vueError->display();
+}
+else {
+    header('Status: 404 Not Found');
+    echo '<html><body><h1>My Page NotFound</h1></body></html>';
+}
+
+?>
+```
+
+Le code de `index.php` est centré sur la création des objets (lignes 25 à 47) et le routage (lignes 49 à 120). Dans la partie routage, on trouve au début (lignes 50 à 70) le code lié à l'authentification (appliqué à toutes les pages à l'exception de la page de connexion). La méthode `authenticateAction` de la classe `Controllers` s'occupe de gérer cela. Elle retourne un message d'erreur si l'authentification a échoué (variable `$error`). Dans ce cas, une nouvelle route `/annonces/index.php/error` est définie (ligne 65), et une adresse de redirection est initialisée (`/annonces/index.php`). Cette route "erreur" est traitée à la ligne 103.  Elle consiste à afficher une fenêtre d'erreur et à rediriger l'utilisateur automatiquement vers une autre page ensuite. Une nouvelle classe `ViewError` est définie pour cela (cf. capture d'écran ci-dessous).
+
+```php
+<?php
+namespace control;
+
+class Controllers
+{
+
+    public function  authenticateAction($userCheck, $dataUsers){
+
+        // Si l'utilisateur n'a pas de session ouverte
+        if( !isset($_SESSION['login']) ) {
+
+            // Si la page d'origine est le formulaire de connexion ou de création de compte
+            if( isset($_POST['login']) && isset($_POST['password']) )
+            {
+                if( !$userCheck->authenticate($_POST['login'], $_POST['password'], $dataUsers) )
+                {
+                    // retourne une erreur si le compte n'est pas enregistré
+                    $error = 'bad login or pwd';
+                    return $error;
+
+                }
+                // Enregistrement des informations de session après une authentification réussie
+                else {
+                    $_SESSION['login'] = $_POST['login'] ;                    
+                }
+            }
+            else{
+                // retourne une erreur si la personne ne passe pas par le forumlaire de création ou de connexion
+                $error = 'not connected';
+                return $error;
+            }
+
+        }
+    }
+
+    public function annoncesAction( $data, $annoncesCheck)
+    {
+            $annoncesCheck->getAllAnnonces($data);
+    }
+
+    public function postAction($id, $data, $annoncesCheck)
+    {
+        $annoncesCheck->getPost($id, $data);
+    }
+}
+```
+<img src="td1-img/11-viewError.png" width="800px"/>
+
+Le diagramme de classes suivant représente l'architecture de l'application à la fin du TD.
+
+<img src="td1-img/diagClassesFinal.jpg" width="800px"/>

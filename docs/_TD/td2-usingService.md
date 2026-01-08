@@ -30,22 +30,11 @@ Les captures d'écran suivantes représentent l'application obtenue à la fin (a
 <img src="td2-img/3-finalScreenshotJobs.png" width="400px" border="1px solid black"/>
 
 
-## Partie 0 - Améliorer l'architecture du TD1 pour pouvoir intégrer les API
-
-L'architecture actuelle a regroupé toutes les méthodes d'accès dans l'interface `DataAccessInterface`. Une source de données implémentant cette interface doit donc contenir à la fois des méthodes d'accès aux informations des utilisateurs, et des méthodes d'accès aux informations des annonces. Une source de données "compatible" avec cette interface doit donc fournir ces deux types de données. Or, les API que nous allons consommer ne fournissent que des informations de types "annonces". Cette interface `DataAccessInterface` englobe donc trop de méthodes. Elle  ne respecte pas le principe "single use" des principes SOLID.
-
-Cette limite mais en avant un autre problème lié aux données utilisateurs.  L'authentification des utilisateurs est liée au cas d'utilisation "afficher les annonces" alors qu'elle devrait être indépendante. En effet, l'authentification est l'étape préalable à l'utilisation de toutes les fonctionnalités de l'outil et pas seulement du cas d'utilisation "afficher les annonces". 
-
-Dans le diagramme de classes précédent, nous avons donc isolé l'authentification des utilisateurs dans une classe  `UserChecking`. Ensuite, nous avons spécialisé les interfaces d'accès aux données. Pour cela, nous avons ajouté une interface `UserAccessInterface` dans le composant `service` pour l'accès aux données des utilisateurs, et renommé  l'interface  `DataAccessInterface` en `AnnonceAccessInterface` car elle va uniquement être dédiée à l'accès aux annonces maintenant. Nous avons aussi modifié le composant `data` afin qu'il contienne les classes permettant d'accéder en "SQL" aux différentes données, ce qui se matérialise par les classes `UserSqlAccess` et `AnnonceSqlAccess`. Bien entendu, le contrôleur frontal a dû être adapté pour intégrer ces modifications.
-
-Le code associé à ces modifications est mis à disposition sur Ametice. Vous devez l'utiliser comme base pour ce qui suit. 
-
-
 
 
 ## Partie 1 - Afficher les entreprises proposant de d'alternance
 
-Une fois ces transformations effectuées, nous pouvons intégrer le nouveau cas d'usage lié à l'affichage des entreprises susceptibles de proposer de l'alternances en informatique.
+A partir du code du TD précédent, nous allons maintenant intégrer le nouveau cas d'usage lié à l'affichage des entreprises susceptibles de proposer de l'alternances en informatique.
 
 La documentation de l'[API Alternance](https://www.data.gouv.fr/fr/dataservices/api-alternance/) à utiliser est disponible sur le site [data.gouv.fr](https://www.data.gouv.fr/fr/dataservices/). Ce site vise à promouvoir l'utilisation et la diffusion de données open source en mettant à disposition les données de toutes les administrations. La [documentation technique de cette API](https://labonnealternance-recette.apprentissage.beta.gouv.fr/api/docs/static/index.html) présente plusieurs ressources et permet de tester des requêtes. Nous allons plus particulièrement utiliser le point d'accès permettant de récupérer la liste des entreprises proposant des contrats en alternance en informatique à proximité (dans un rayon de 100km). Cette liste sera affichée dans l'application Annonces dans une interface graphique dédiée. Cette interface sera accessible par un menu commun à toute l'application.
 
