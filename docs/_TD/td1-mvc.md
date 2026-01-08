@@ -1172,7 +1172,7 @@ Il faut maintenant faire de même pour les autres classes et créer leur espace 
  Nous obtenons ainsi une première version de application implémentant le patron MVC et les principes des architectures propres.  Elle reste très basique fonctionnellement mais cette architecture la rend notamment  plus facile à faire évoluer.
 
 
- ### 6 - Isoler le cas d'utilisation "authentifier un utilisateur"
+### 6 - Isoler le cas d'utilisation "authentifier un utilisateur"
 
 A ce sujet, une analyse de l'architecture actuelle  mais en avant une limite liée à l'authentification des utilisateurs. Cette dernière est intégrée au cas d'utilisation "afficher les annonces" alors qu'elle devrait être indépendante. En effet, l'authentification est l'étape préalable à l'utilisation de toutes les  fonctionnalités (actuelles ou futures) de l'outil et pas seulement du cas d'utilisation "afficher les annonces". 
 
@@ -1264,6 +1264,8 @@ Il faut maintenant modifier le contrôleur frontal `index.php` pour exploiter ce
 
 ```php
 <?php
+
+require_once 'config.php';
 
 // charge et initialise les bibliothèques globales
 include_once 'data/AnnonceSqlAccess.php';
