@@ -12,7 +12,7 @@ layout: home
 2. [Architecture logicielle « propre »](CM/R4.01_Architecture_Logicielle-Chapitre2.pptx)
 3. [Utilisation et conception de services web en Java](CM/R4.01_Architecture_Logicielle-Chapitre3.pptx)
 
-**Volume horaire** : 33 h (8h CM / 9h TD / 16h TP)
+**Volume horaire** : 31 h (4h CM / 11h TD / 16h TP)
 
 Quelques références bibliographiques :
 - « Architecture logicielle propre », Robert C. Martin, édition Pearson, 2020.
