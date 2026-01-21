@@ -23,18 +23,22 @@ Pour pouvoir fonctionner, notre application Web a besoin d'un serveur Web et d'u
 
 Si vous travaillez sur votre PC, vous pouvez à la place utiliser des outils comme [Xampp](https://www.apachefriends.org/fr/index.html), une solution permettant d'installer et de gérer simplement un serveur web  Apache, en local, intégrant MariaDB et PHP.
 
+Dans tous les cas, nos développements seront effectués à partir d'un dépôt GitHub préalablement créé. Pour cloner ce dépôt dans votre compte GitHub, vous devez aller sur le cours **Ametice** et cliquer sur le lien GitHub dans la section "Dépôt GitHub pour la partie architecture propre (TD1 et TP1)".
+
 
 ### 1 - Création et paramétrage du projet PhpStorm
 
-Nous allons tout d'abord créer le projet dans PhpStorm et configurer l'environnement de développement local. 
+Nous allons maintenant créer le projet dans PhpStorm et configurer l'environnement de développement local. 
 
-Pour cela, vous lancez PhpStorm et sélectionnez `New Project`. 
+Pour cela, vous lancez PhpStorm et sélectionnez `Get from VCS`, puis copiez l'url du dépôt GitHub créé précédemment et cloner le dépôt. 
 
 <img src="td1-img/phpstorm-open.png" width="600px">
 
-Vous devez ensuite sélectionner le type de projet à créer. Dans notre cas, il s'agit d'un projet PHP vide (`PHP Empty Project`). Puis, vous précisez dans quel répertoire ce projet sera créé (`Location`) et cliquez sur `Create`.
+Vous devez ensuite autoriser PhpStorm à se connecter à votre dépôt GitHub. Pour cela, vous utiliserez un token et cliquerez ensuite sur `Generate` pour générer un token pour l'application. Avant de valider la génération du token en bas de la page, vous modifierez la date d'expiration du token à 90 jours et sélectionnerez tous les droits ("scopes").  Vous copierez ensuite le token généré par GitHub dans votre fenêtre PhpStorm et vous connecterez.
 
-<img src="td1-img/phpstorm-newProject.png" width="600px">
+
+
+<img src="td1-img/phpstorm-newProjectFromGitHub.png" width="600px">
 
 Nous allons maintenant configurer le serveur web local. Vous devez aller dans les paramètres de PhpStorm en passant par le sous-menu `File` et en sélectionnant `Settings`. Il faut ensuite aller dans `Build, Execution, Deployment` et sélectionner `Deployment`. Nous allons ajouter ici le server web intégré à l'interpréteur  PHP en cliquant sur `+` et en sélectionnant un serveur de type `in place` (car le code sera directement exécuté  à partir du répertoire du projet PhpStorm). Une fenêtre s'ouvre ensuite pour nous demander un nom pour ce serveur. Nous pouvons par exemple mettre "built-in webserver". 
 
@@ -52,11 +56,15 @@ Nous allons ensuite ajouter une nouvelle configuration en cliquant sur `+` et s�
 
 <img src="td1-img/phpstorm-runtimeConfig2.png" width="600px">
 
-Pour tester tout cela, nous allons maintenant décompresser et copier le code mis à disposition sur le cours Ametice (sections Ressources, "Code PHP application annonces basique (début TD1)"), et faire un simple glisser/déposer dans le projet PhpStorm. Une fois les trois fichiers copiés, nous obtenons l'interface suivante.
+
+
+Pour tester ce code, il suffit de lancer le serveur web en cliquant sur la configuration d'exécution précédemment créée, via le bouton triangle vert dans le bandeau supérieur droit. 
 
 <img src="td1-img/phpstorm-projetBasique.png" width="600px">
 
-Pour tester ce code, il suffit de lancer le serveur web en cliquant sur la configuration d'exécution précédemment créée, via le bouton triangle vert dans le bandeau supérieur droit. Le serveur étant démarré, il est possible par exemple d'ouvrir la page "index.html" et de l'afficher. A ce niveau, deux options vous sont proposées par PhpStorm sous forme de petits icônes affichés à droite du code : ouvrir la page dans une fenêtre à l'intérieur de PhpStorm (`Built-in Preview`) ou ouvrir la page dans un navigateur externe (p.ex. Firefox). On va choisir la première option pour l'exemple. 
+Le serveur étant démarré, il est possible par exemple d'ouvrir la page "index.html" et de l'afficher. A ce niveau, deux options vous sont proposées par PhpStorm sous forme de petits icônes affichés à droite du code : ouvrir la page dans une fenêtre à l'intérieur de PhpStorm (`Built-in Preview`) ou ouvrir la page dans un navigateur externe (p.ex. Firefox). On va choisir la première option dans l'exemple mais, si vous êtes sur les machines de l'IUT, vous devrez passer par la deuxième solution à cause des droits limités de votre compte. 
+
+
 
 <img src="td1-img/phpstorm-execution1.png" width="600px">
 
