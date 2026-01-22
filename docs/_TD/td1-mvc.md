@@ -14,7 +14,7 @@ Nous partirons d'une application très basique permettant d'afficher une liste d
 
 <img src="td1-img/archi_flat_php.jpg" width="600px"/>
 
-La partie 4 est optionnelle et propose d'explorer plus en détail d'autres concepts d'architecture propre et d'autres patrons de conception, ainsi que des techniques plus avancées pour rendre le code plus portable, mieux testable, plus robuste et plus explicite pour d'éventuels autres développeurs travaillant sur l'application.
+La  partie 5 est optionnelle et propose d'explorer plus en détail d'autres concepts d'architecture propre et d'autres patrons de conception, ainsi que des techniques plus avancées pour rendre le code plus portable, mieux testable, plus robuste et plus explicite pour d'éventuels autres développeurs travaillant sur l'application.
 
 
 ## Partie 1 - Mise en place de l'environnement de développement
@@ -1182,8 +1182,17 @@ Il faut maintenant faire de même pour les autres classes et créer leur espace 
  Notre application est finie. Elle reste très basique fonctionnellement mais elle implémente le patron MVC et les principes des architectures propres, ce qui la rend notamment  plus facile à faire évoluer.
 
 
+## Partie 4 -  Utilisation d'une IA générative pour construire l'architecture
 
-## Partie 4 - **Optionnelle** - Aller plus loin: typage et robustesse du code
+Dans cette partie, vous allez comparer l'architecture construite avec celle générée par une IA générative (le choix du modèle est libre).
+
+Dans un premier temps, vous allez écrire (ou générer) un prompt demandant à l'IA de vous générer le code de l'application précédente (à partir de rien, sans donner en entrée le sujet du TD). Vous spécifierez que l'application devra suivre une architecture MVC et appliquer les principes d'architecture propre.
+
+Dans un second temps, vous analyserez et discuterez l'architecture produite par l'IA générative et celle produite à la fin du TD.
+
+Les diagrammes de classes des deux architectures et l'analyse de leurs différences seront mis dans un document PDF et uploadé sur Ametice.
+
+## Partie 5 - **Optionnelle** - Aller plus loin: typage et robustesse du code
 
 À ce stade, notre application respecte les principes d'une architecture propre avec une séparation claire des responsabilités. Toutefois, nous pouvons encore améliorer la robustesse et la maintenabilité du code en ajoutant du typage explicite. PHP, depuis la version 7, permet de déclarer les types des paramètres, des propriétés et des valeurs de retour. Cela permet de détecter des erreurs plus tôt et de rendre le code plus explicite.
 
@@ -1546,12 +1555,4 @@ Vous pouvez maintenant ajouter du typage dans les autres classes si vous le souh
 
 Testez à nouveau votre application. Elle fonctionne de manière identique, mais le code est maintenant plus robuste, plus flexible et plus facile à maintenir et à tester.
 
-## Partie 5 -  Utilisation d'une IA générative pour construire l'architecture
 
-Dans cette partie, vous allez comparer l'architecture construite avec celle générée par une IA générative (le choix du modèle est libre).
-
-Dans un premier temps, vous allez écrire (ou générer) un prompt demandant à l'IA de vous générer le code de l'application précédente (à partir de rien, sans donner en entrée le sujet du TD). Vous spécifierez que l'application devra suivre une architecture MVC et appliquer les principes d'architecture propre.
-
-Dans un second temps, vous analyserez et discuterez l'architecture produite par l'IA générative et celle produite à la fin du TD.
-
-Les diagrammes de classes des deux architectures et l'analyse de leurs différences seront mis dans un document PDF et uploadé sur Ametice.
