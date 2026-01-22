@@ -14,6 +14,8 @@ Nous partirons d'une application très basique permettant d'afficher une liste d
 
 <img src="td1-img/archi_flat_php.jpg" width="600px"/>
 
+La dernière partie (Partie 4) est optionelle et propose d'explorer plus en détail d'autres concepts d'architecture propre et d'autres patrons de conception, ainsi que des techniques plus avancées pour rendre le code plus portable, mieux testable, plus robuste et plus explicite pour d'éventuels autres dévelopeurs travaillant sur l'application.
+
 
 ## Partie 1 - Mise en place de l'environnement de développement
 
@@ -1177,68 +1179,104 @@ Il faut maintenant faire de même pour les autres classes et créer leur espace 
 
  <img src="td1-img/phpstorm-dataAccessFinal.png" width="800px"/>
 
- Nous obtenons ainsi une première version de application implémentant le patron MVC et les principes des architectures propres.  Elle reste très basique fonctionnellement mais cette architecture la rend notamment  plus facile à faire évoluer.
+ Notre application est finie. Elle reste très basique fonctionnellement mais elle implémente le patron MVC et les principes des architectures propres, ce qui la rend notamment  plus facile à faire évoluer.
 
 
-### 6 - Isoler le cas d'utilisation "authentifier un utilisateur"
 
-A ce sujet, une analyse de l'architecture actuelle  mais en avant une limite liée à l'authentification des utilisateurs. Cette dernière est intégrée au cas d'utilisation "afficher les annonces" alors qu'elle devrait être indépendante. En effet, l'authentification est l'étape préalable à l'utilisation de toutes les  fonctionnalités (actuelles ou futures) de l'outil et pas seulement du cas d'utilisation "afficher les annonces". 
+## Partie 4 - **Optionnelle** - Aller plus loin: typage et robustesse du code
 
-Nous allons donc séparer authentification des utilisateurs et affichage des annonces.
+À ce stade, notre application respecte les principes d'une architecture propre avec une séparation claire des responsabilités. Toutefois, nous pouvons encore améliorer la robustesse et la maintenabilité du code en ajoutant du typage explicite. PHP, depuis la version 7, permet de déclarer les types des paramètres, des propriétés et des valeurs de retour. Cela permet de détecter des erreurs plus tôt et de rendre le code plus explicite.
 
-Pour cela, vous commencez par créer dans `/service` une classe `UserChecking`. On **déplace** ensuite dans cette classe la méthode `authenticate` qui était initialement dans la classe `AnnoncesChecking`. 
+### 1 - Création d'interfaces pour abstraire l'accès aux données
+
+Actuellement, notre classe `DataAccess` dépend directement de PDO. Si nous regardons le constructeur :
 
 ```php
-<?php
-
-namespace service;
-
-class UserChecking
+public function __construct($dataAccess)
 {
-    public function authenticate($login, $password, $data)
-    {
-        return ($data->getUser($login, $password) != null);
-    }
+    $this->dataAccess = $dataAccess; // Ceci pourrait être n'importe quel objet!
+}
 
+public function getPost($id)
+{
+    $id = intval($id);
+    // Ici, le code présuppose, sans verifications, que notre $dataAccess a bel et bien une méthode query()
+    $result = $this->dataAccess->query('SELECT * FROM Post WHERE id=' . $id); 
+    //... et que l'object qu'il retourne a des méthodes fetch() et closeCursor()
+    $row = $result->fetch();
+
+    $post = new Post($row['id'], $row['title'], $row['body'], $row['date']);
+
+    $result->closeCursor();
+
+    return $post;
 }
 ```
 
-<img src="td1-img/11-annoncesChecking.png" width="800px"/>
+Rien ne garantit que `$dataAccess` est bien un objet PDO. De plus, les méthodes de `DataAccess` utilisent des méthodes spécifiques à PDO (comme `query()`, qui retourne un objet de type `PDOStatement`). Si nous voulions vraiment changer d'implémentation (par exemple, lire les données depuis un fichier CSV, utiliser MySQLi, ou créer une version de test avec des données en mémoire), il faudrait modifier le code de `DataAccess`.
 
+L'interface `DataAccessInterface` que nous avons créée dans la partie précédente définit bien les méthodes métier (`getUser`, `getAllAnnonces`, `getPost`), mais elle ne résout pas ce problème de dépendance à `PDO` au niveau de l'implémentation.
 
-Nous allons ensuite ajouter une interface `UserAccessInterface` dans le répertoire `/service` pour séparer également l'accès aux données des utilisateurs. On **déplace** dans cette classe la méthode `getUser`, qui était initialement dans l'interface  `DataAccessInterface`. On en profitera pour renommer (Refactor > Rename) l'interface `DataAccessInterface` en `AnnonceAccessInterface`, afin que son nom reflète mieux son usage actuel.
+Pour résoudre ce problème, nous allons créer deux nouvelles interfaces qui définissent les opérations de base sur les données, sans référence ni dépendance à une technologie particulière :
 
-```php
-<?php
+1. **`Fetchable`** : représente un résultat de requête
+2. **`Queryable`** : représente une source de données interrogeable (DB, API, CSV...)
 
-namespace service;
-
-interface UserAccessInterface
-{
-    public function getUser($login, $password);
-}
-```
-<img src="td1-img/11-annonceAccessInterface.png" width="800px"/>
-
-Nous allons faire de même pour la classe `DataAccess` dans `/data` et la renommer `AnnonceSqlAccess`. Nous allons par ailleurs créer dans ce répertoire `/data` la classe `UserSqlAccess`  dans laquelle nous déplacerons le code associé aux utilisateurs (p.ex. `getUser`).
-
+Créez un fichier `data/Fetchable.php` avec le code suivant :
 
 ```php
 <?php
-
 namespace data;
 
-use service\UserAccessInterface;
-include_once "service/UserAccessInterface.php";
+interface Fetchable
+{
+    public function rowCount(): int;
+    public function fetch(...$args): mixed;
+    public function closeCursor(): bool;
+}
+```
+
+Cette interface définit les méthodes minimales nécessaires pour manipuler un résultat de requête. Notez l'utilisation de `mixed` comme type de retour pour `fetch()`, car cette méthode peut retourner un tableau, `false`, ou d'autres types selon les paramètres.
+
+Créez maintenant un fichier `data/Queryable.php` avec le code suivant :
+
+```php
+<?php
+namespace data;
+
+interface Queryable
+{
+    public function query(...$args): Fetchable;
+}
+```
+
+Cette interface définit qu'une source de données doit pouvoir exécuter des requêtes et retourner un objet `Fetchable`.
+
+### 2 - Ajout du typage strict dans DataAccess
+
+Nous pouvons maintenant modifier notre classe `DataAccess` pour utiliser ces nouvelles interfaces avec un typage strict. Renommez d'abord le fichier `data/DataAccess.php` en `data/DataAccessDB.php` (avec "Refactor > Rename" dans PhpStorm) pour mieux refléter son rôle.
+
+Au début du fichier `data/DataAccessDB.php`, ajoutez la déclaration de typage strict :
+
+```php
+<?php
+declare(strict_types=1);
+namespace data;
 
 use domain\User;
-include_once "domain/User.php";
+use domain\Post;
+```
 
-class UserSqlAccess implements UserAccessInterface
+Cette directive `declare(strict_types=1)` force PHP à vérifier strictement les types. Par exemple, passer une chaîne `"123"` à un paramètre de type `int` génèrera une erreur au lieu d'une conversion automatique.
+
+Modifiez ensuite la classe pour typer la propriété et le constructeur :
+
+```php
+class DataAccessDB implements DataAccessInterface
 {
-    protected $dataAccess = null;
+    private Queryable $dataAccess; // Typage similaire à d'autres languages fortement typés tels Java
 
-    public function __construct($dataAccess)
+    public function __construct(Queryable $dataAccess) // Typage des paramètres
     {
         $this->dataAccess = $dataAccess;
     }
@@ -1247,209 +1285,268 @@ class UserSqlAccess implements UserAccessInterface
     {
         $this->dataAccess = null;
     }
+```
 
-    public function getUser($login, $password)
+Notez que `$dataAccess` est maintenant typé comme `Queryable` (notre interface). Cela signifie que nous pouvons passer n'importe quelle implémentation de `Queryable`, pas seulement PDO (qui respecte notre interface puisque l'interface est construite autour).
+
+Cet ajout ne change en rien la fonction de notre code. En revanche, cela permet a PhpStorm de nous notifier en avance si nous passons un objet au constructeur qui ne respecte pas notre interface `Queryable`. Cela force aussi PHP a retourner une `TypeError` en amont de l'execution, plus facile à debugger.
+
+
+**La suite traite de concepts plus avancés et n'est qu'un bonus pour les étudiants souhaitant aller plus loin**
+
+
+### 3 - *Section Bonus* Démonstration de la flexibilité : lecture de données depuis un CSV
+
+Maintenant que notre code utilise l'interface `Queryable` au lieu de dépendre directement de PDO, nous pouvons facilement changer de source de données. Imaginons que nous voulions lire les utilisateurs depuis un fichier CSV au lieu d'une base de données.
+
+Supposons qu'une bibliothèque tierce nous fournit une classe `CSVDataReader` avec les méthodes suivantes :
+
+```php
+class CSVDataReader
+{
+    public function readFile(string $filename): CSVResult { /* ... */ }
+}
+
+class CSVResult
+{
+    public function count(): int { /* ... */ }
+    public function next(): array|false { /* ... */ }
+    public function closeFile(): void { /* ... */ }
+}
+```
+
+Cette classe ne respecte pas nos interfaces `Queryable` et `Fetchable` (les noms de méthodes sont différents). Toutefois, nous pouvons créer une classe qui "enveloppe" (`wrap`) `CSVResult` pour la rendre compatible avec notre interface `Fetchable` :
+
+```php
+<?php
+namespace data;
+
+class CSVFetchableWrapper implements Fetchable
+{
+    private CSVResult $csvResult;
+
+    public function __construct(CSVResult $csvResult)
     {
-        $user = null;
+        $this->csvResult = $csvResult;
+    }
 
-        $query = 'SELECT * FROM Users WHERE login="' . $login . '" and password="' . $password . '"';
-        $result = $this->dataAccess->query($query);
+    public function rowCount(): int
+    {
+        return $this->csvResult->count();
+    }
 
-        if ( $row = $result->fetch() )
-            $user = new User( $row['login'] , $row['password'], $row['name'], $row['firstName'], $row['date'] );
+    public function fetch(...$args): mixed
+    {
+        return $this->csvResult->next();
+    }
 
-        $result->closeCursor();
-
-        return $user;
+    public function closeCursor(): bool
+    {
+        $this->csvResult->closeFile();
+        return true;
     }
 }
 ```
 
-<img src="td1-img/11-annonceSqlAccess.png" width="800px"/>
-
-
-Il faut maintenant modifier le contrôleur frontal `index.php` pour exploiter ces nouvelles classes et les passer en paramètres des bons objets. Nous allons en profiter pour généraliser l'authentification et mettre en place des sessions (si cela n'a pas été fait pendant le TP1). 
+De même, nous pouvons créer un "wrapper" pour `CSVDataReader` afin qu'il respecte l'interface `Queryable` :
 
 ```php
 <?php
+namespace data;
 
-require_once 'config.php';
+class CSVQueryableWrapper implements Queryable
+{
+    private CSVDataReader $reader;
 
-// charge et initialise les bibliothèques globales
-include_once 'data/AnnonceSqlAccess.php';
-include_once 'data/UserSqlAccess.php';
+    public function __construct(CSVDataReader $reader)
+    {
+        $this->reader = $reader;
+    }
 
-include_once 'control/Controllers.php';
-include_once 'control/Presenter.php';
+    public function query(...$args): Fetchable
+    {
+        $filename = $args[0]; // Le "query" est ici le nom du fichier
+        $csvResult = $this->reader->readFile($filename);
+        return new CSVFetchableWrapper($csvResult);
+    }
+}
+```
 
-include_once 'service/AnnoncesChecking.php';
-include_once 'service/UserChecking.php';
+Grâce à ces wrappers, nous pourrions maintenant utiliser un fichier CSV comme source de données en modifiant simplement `index.php` :
 
-include_once 'gui/Layout.php';
-include_once 'gui/ViewLogin.php';
-include_once 'gui/ViewAnnonces.php';
-include_once 'gui/ViewPost.php';
-include_once 'gui/ViewError.php';
-include_once 'gui/ViewCreate.php';
+```php
+// Au lieu de :
+$pdo = new PDO('mysql:host=...', 'user', 'password');
+$data = new data\DataAccessDB($pdo);
 
-use gui\{ViewLogin, ViewAnnonces, ViewPost, ViewError, Layout};
-use control\{Controllers, Presenter};
-use data\{AnnonceSqlAccess, UserSqlAccess};
-use service\{AnnoncesChecking, UserChecking};
+// Nous pourrions faire :
+$csvReader = new CSVDataReader();
+$csvWrapper = new data\CSVQueryableWrapper($csvReader);
+$data = new data\DataAccessDB($csvWrapper);
+```
 
+Le reste du code (`DataAccessDB`, `AnnoncesChecking`, les contrôleurs, les vues) reste **totalement inchangé**. C'est la puissance de l'abstraction par les interfaces et du typage : notre architecture est vraiment flexible.
+
+### 4 - *Section Bonus* Le patron de conception Adaptateur (Adapter)
+
+La technique que nous venons d'utiliser avec les wrappers `CSVFetchableWrapper` et `CSVQueryableWrapper` est en réalité un patron de conception très connu : le **patron Adaptateur** (en anglais : *Adapter pattern*).
+
+Le patron Adaptateur permet de faire fonctionner ensemble des classes ayant des interfaces incompatibles. Il agit comme un "traducteur" entre deux interfaces différentes. Dans notre exemple :
+- `CSVResult` a une interface incompatible avec `Fetchable`
+- `CSVFetchableWrapper` **adapte** `CSVResult` pour qu'il respecte l'interface `Fetchable`
+
+Ce patron est l'un des 23 patrons de conception classiques documentés dans le livre *Design Patterns* du "Gang of Four". Vous pouvez en apprendre plus sur ce patron et d'autres patrons de conception sur le site [Refactoring Guru - Patron Adaptateur](https://refactoring.guru/fr/design-patterns/adapter).
+
+Dans notre cas, nous avons utilisé le patron Adaptateur à deux reprises :
+1. Pour adapter `CSVResult` vers `Fetchable`
+2. Pour adapter `CSVDataReader` vers `Queryable`
+
+Ce patron est particulièrement utile lorsque :
+- Vous voulez utiliser une bibliothèque tierce dont l'interface ne correspond pas à vos besoins
+- Vous voulez rendre compatible du code ancien avec une nouvelle architecture
+- Vous voulez découpler votre code d'implémentations spécifiques
+
+### 5 - Les bénéfices du typage et du patron Adaptateur
+
+Cette approche apporte plusieurs avantages :
+
+1. **Détection d'erreurs précoce** : Si vous passez un mauvais type de paramètre, PHP génère une erreur immédiatement, au lieu d'avoir un comportement imprévu plus tard dans l'exécution.
+
+2. **Documentation du code** : Les signatures de méthodes sont explicites. Un développeur comprend immédiatement ce qu'attend une méthode et ce qu'elle retourne.
+
+3. **Support IDE** : Les environnements de développement comme PhpStorm peuvent utiliser ces informations pour l'autocomplétion et la détection d'erreurs.
+
+4. **Flexibilité garantie** : En typant contre les interfaces (`Queryable`, `DataAccessInterface`) plutôt que les implémentations concrètes (`PDO`, `DataAccessDB`), vous garantissez que le code respecte vraiment les principes d'architecture propre.
+
+5. **Interopérabilité** : Le patron Adaptateur permet d'utiliser n'importe quelle bibliothèque tierce, même si son interface ne correspond pas exactement à vos besoins.
+
+6. **Testabilité** : Vous pouvez maintenant créer facilement des adaptateurs de test, sans avoir besoin d'une vraie base de données :
+
+```php
+class MockQueryable implements Queryable
+{
+    public function query(...$args): Fetchable
+    {
+        return new MockFetchable(); // Peut retourner un tableau de pseudo données en mémoire, etc...
+    }
+}
+```
+
+### 6 - *(Avancé)* Utilisation du patron Adaptateur avec PDO
+
+En réalité, pour avoir un code strictement portable et adaptable nous devrions également utiliser le patron Adaptateur pour PDO, plutôt que de dépendre directement de PDO dans `DataAccessDB`. Nous pourrions revoir nos interfaces pour les rendres plus "fluentes" d'un point de vue de nomenclature, particulierement `Fetchable` qui expose des fonctions aux noms provenant de la classe `PDO`.
+La nomenclature est un élément crucial dans une architecture propre, et pourtant souvent bien peu pris en considération.
+
+```php
+interface Fetchable 
+{
+    // Renommons `closeCursor()` pour se distancier de la notion de `cursor` propre aux PDO et bases de données
+    public function close(): bool; 
+}
+}
+```
+
+Créez un fichier `data/PDOStatementAdapter.php` :
+
+```php
+<?php
+namespace data;
+
+use PDOStatement;
+
+class PDOStatementAdapter implements Fetchable
+{
+    private PDOStatement $statement;
+
+    public function __construct(PDOStatement $statement)
+    {
+        $this->statement = $statement;
+    }
+
+    public function rowCount(): int
+    {
+        return $this->statement->rowCount();
+    }
+
+    public function fetch(...$args): mixed
+    {
+        return $this->statement->fetch(...$args);
+    }
+
+    public function close(): bool
+    {
+        return $this->statement->closeCursor();
+    }
+}
+```
+
+Créez ensuite un fichier `data/PDOAdapter.php` :
+
+```php
+<?php
+namespace data;
+
+use PDO;
+
+class PDOAdapter implements Queryable
+{
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function query(...$args): Fetchable
+    {
+        $statement = $this->pdo->query(...$args);
+        return new PDOStatementAdapter($statement);
+    }
+}
+```
+
+Modifiez maintenant `index.php` pour utiliser ces adaptateurs :
+
+```php
 $data = null;
 try {
-    // initialisation de la connexion à la bd
-    $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME;
-    $bd = new PDO($dsn, DB_USER, DB_PASS) );  
-    
-    // construction du modèle
-    $dataAnnonces = new AnnonceSqlAccess($bd);
-    $dataUsers = new UserSqlAccess($bd);
+    $pdo = new PDO('mysql:host=mysql-[compte].alwaysdata.net;dbname=[compte]_annonces_db',
+                   '[compte]_annonces', 'mdp');
+
+    $pdoAdapter = new data\PDOAdapter($pdo);
+    $data = new data\DataAccessDB($pdoAdapter);
 
 } catch (PDOException $e) {
     print "Erreur de connexion !: " . $e->getMessage() . "<br/>";
     die();
 }
-
-// initialisation du controller
-$controller = new Controllers();
-
-// intialisation du cas d'utilisation service\AnnoncesChecking
-$annoncesCheck = new AnnoncesChecking() ;
-
-// intialisation du cas d'utilisation service\UserChecking
-$userCheck = new UserChecking() ;
-
-// intialisation du presenter avec accès aux données de AnnoncesCheking
-$presenter = new Presenter($annoncesCheck);
-
-// chemin de l'URL demandée au navigateur
-// (p.ex. /annonces/index.php)
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
-// définition d'une session d'une heure
-ini_set('session.gc_maxlifetime', 3600);
-session_set_cookie_params(3600);
-session_start();
-
-// Authentification et création du compte (sauf pour le formulaire de connexion et la route de déconnexion)
-if ( '/annonces/' != $uri and '/annonces/index.php' != $uri and '/annonces/index.php/logout' != $uri ){
-
-    $error = $controller->authenticateAction($userCheck, $dataUsers);
-
-    if( $error != null )
-    {
-        $uri='/annonces/index.php/error' ;
-        if( $error == 'bad login or pwd' or $error == 'not connected')
-            $redirect = '/annonces/index.php';
-    }
-}
-
-// route la requête en interne
-// i.e. lance le bon contrôleur en fonction de la requête effectuée
-if ( '/annonces/' == $uri || '/annonces/index.php' == $uri || '/annonces/index.php/logout' == $uri) {
-    // affichage de la page de connexion
-
-    session_destroy();
-    $layout = new Layout("gui/layout.html" );
-    $vueLogin = new ViewLogin( $layout );
-
-    $vueLogin->display();
-}
-elseif ( '/annonces/index.php/annonces' == $uri ){
-    // affichage de toutes les annonces
-
-    $controller->annoncesAction($dataAnnonces, $annoncesCheck);
-
-    $layout = new Layout("gui/layout.html" );
-    $vueAnnonces= new ViewAnnonces( $layout,  $_SESSION['login'], $presenter);
-
-    $vueAnnonces->display();
-}
-elseif ( '/annonces/index.php/post' == $uri
-            && isset($_GET['id'])) {
-    // Affichage d'une annonce
-
-    $controller->postAction($_GET['id'], $dataAnnonces, $annoncesCheck);
-
-    $layout = new Layout("gui/layout.html" );
-    $vuePost= new ViewPost( $layout,  $_SESSION['login'], $presenter );
-
-    $vuePost->display();
-}
-elseif ( '/annonces/index.php/error' == $uri ){
-    // Affichage d'un message d'erreur
-
-    $layout = new Layout("gui/layout.html" );
-    $vueError = new ViewError( $layout, $error, $redirect );
-
-    $vueError->display();
-}
-else {
-    header('Status: 404 Not Found');
-    echo '<html><body><h1>My Page NotFound</h1></body></html>';
-}
-
-?>
 ```
 
-Le code de `index.php` est centré sur la création des objets (lignes 25 à 47) et le routage (lignes 49 à 120). Dans la partie routage, on trouve au début (lignes 50 à 70) le code lié à l'authentification (appliqué à toutes les pages à l'exception de la page de connexion). La méthode `authenticateAction` de la classe `Controllers` s'occupe de gérer cela. Elle retourne un message d'erreur si l'authentification a échoué (variable `$error`). Dans ce cas, une nouvelle route `/annonces/index.php/error` est définie (ligne 65), et une adresse de redirection est initialisée (`/annonces/index.php`). Cette route "erreur" est traitée à la ligne 103.  Elle consiste à afficher une fenêtre d'erreur et à rediriger l'utilisateur automatiquement vers une autre page ensuite. Une nouvelle classe `ViewError` est définie pour cela (cf. capture d'écran ci-dessous).
+N'oubliez pas d'ajouter les `include` nécessaires au début de `index.php` :
 
 ```php
-<?php
-namespace control;
-
-class Controllers
-{
-
-    public function  authenticateAction($userCheck, $dataUsers){
-
-        // Si l'utilisateur n'a pas de session ouverte
-        if( !isset($_SESSION['login']) ) {
-
-            // Si la page d'origine est le formulaire de connexion ou de création de compte
-            if( isset($_POST['login']) && isset($_POST['password']) )
-            {
-                if( !$userCheck->authenticate($_POST['login'], $_POST['password'], $dataUsers) )
-                {
-                    // retourne une erreur si le compte n'est pas enregistré
-                    $error = 'bad login or pwd';
-                    return $error;
-
-                }
-                // Enregistrement des informations de session après une authentification réussie
-                else {
-                    $_SESSION['login'] = $_POST['login'] ;                    
-                }
-            }
-            else{
-                // retourne une erreur si la personne ne passe pas par le forumlaire de création ou de connexion
-                $error = 'not connected';
-                return $error;
-            }
-
-        }
-    }
-
-    public function annoncesAction( $data, $annoncesCheck)
-    {
-            $annoncesCheck->getAllAnnonces($data);
-    }
-
-    public function postAction($id, $data, $annoncesCheck)
-    {
-        $annoncesCheck->getPost($id, $data);
-    }
-}
+include_once 'data/Queryable.php';
+include_once 'data/Fetchable.php';
+include_once 'data/PDOAdapter.php';
+include_once 'data/PDOStatementAdapter.php';
+include_once 'data/DataAccessDB.php';
 ```
-<img src="td1-img/11-viewError.png" width="800px"/>
 
-Le diagramme de classes suivant représente l'architecture de l'application à la fin du TD.
+Et la directive `use` :
 
-<img src="td1-img/diagClassesFinal.jpg" width="800px"/>
+```php
+use data\{DataAccessDB, PDOAdapter};
+```
 
-## Partie 4 -  Utilisation d'une IA générative pour construire l'architecture
+### 7 - *(Avancé)* Pour les perfectionnistes! Typage dans les autres couches
+
+Vous pouvez maintenant ajouter du typage dans les autres classes si vous le souhaitez.
+
+
+
+Testez à nouveau votre application. Elle fonctionne de manière identique, mais le code est maintenant plus robuste, plus flexible et plus facile à maintenir et à tester.
+
+## Partie 5 -  Utilisation d'une IA générative pour construire l'architecture
 
 Dans cette partie, vous allez comparer l'architecture construite avec celle générée par une IA générative (le choix du modèle est libre).
 
