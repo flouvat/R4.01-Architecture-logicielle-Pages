@@ -14,7 +14,7 @@ Nous partirons d'une application très basique permettant d'afficher une liste d
 
 <img src="td1-img/archi_flat_php.jpg" width="600px"/>
 
-La dernière partie (Partie 4) est optionelle et propose d'explorer plus en détail d'autres concepts d'architecture propre et d'autres patrons de conception, ainsi que des techniques plus avancées pour rendre le code plus portable, mieux testable, plus robuste et plus explicite pour d'éventuels autres dévelopeurs travaillant sur l'application.
+La partie 4 est optionnelle et propose d'explorer plus en détail d'autres concepts d'architecture propre et d'autres patrons de conception, ainsi que des techniques plus avancées pour rendre le code plus portable, mieux testable, plus robuste et plus explicite pour d'éventuels autres développeurs travaillant sur l'application.
 
 
 ## Partie 1 - Mise en place de l'environnement de développement
