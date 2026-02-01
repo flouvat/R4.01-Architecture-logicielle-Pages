@@ -515,6 +515,8 @@ Avec ce système de routage, il est nécessaire de modifier les vues `\view\logi
 
 <img src="td1-img/phpstorm-annoncesRoute.png" width="800px"/>
 
+**Pour ceux qui ont rencontré des problèmes avec leurs URLs ou configuration du serveur**, voir [cette section](#addendum---troubleshooting).
+
 
 
 ## Partie 3 -  Vers une architecture plus "propre"
@@ -1555,4 +1557,320 @@ Vous pouvez maintenant ajouter du typage dans les autres classes si vous le souh
 
 Testez à nouveau votre application. Elle fonctionne de manière identique, mais le code est maintenant plus robuste, plus flexible et plus facile à maintenir et à tester.
 
+
+### ADDENDUM - TROUBLESHOOTING
+
+
+#### Problèmes de routage, URL inconnues, erreurs de type `resource not found` etc... rencontrées dans la partie Controlleurs:
+
+- Si vous utilisez le serveur intégré de PHPStorm:
+  Dans la configuration, cherchez « Options » et cochez « Use router script », et saisissez index.php
+
+- Si vous rencontrez d'autres problêmes de ce type, passez votre environnement avec Docker (voir ci-dessous) et utilisez le index.php suivant (jusqu'à la partie sur les PDOs uniquement!).
+Changez aussi les attributs `action` de vos formulaires et `href` de vos liens pour le format suivant:
+- `index.php/annonces` (login.php, `<form>`)
+- `index.php/post?id=...` (annonces.php, `href` du lien)
+  
+```php
+<?php
+
+require_once 'model.php';
+require_once 'controllers.php';
+
+session_start();
+
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+$isAuthenticated = (isset($_SESSION['login']) && isset($_SESSION['password']));
+$isLoginRequest = (isset($_POST['login']) && isset($_POST['password']));
+
+$cleanURI = ltrim(str_replace('index.php', '', $uri), '/');
+
+
+if ( ! $isAuthenticated && ! $isLoginRequest || $uri === '/'  ) {
+    return loginAction();
+} else if( $isLoginRequest ) {
+    $_SESSION['login'] = $_POST['login'];
+    $_SESSION['password'] = $_POST['password'];
+}
+
+return match($cleanURI) {
+    'annonces' => annoncesAction($_POST['login'], $_POST['password']),
+    'post' => postAction($_GET['id'] ?? null),
+    default => header('Status: 404 Not Found') && 
+               print('<html><body><h1>The cake is not here</h1></body></html>'),
+};
+
+
+?>
+```
+
+#### Utilisation de Docker et Docker Compose pour l'environnement de développement
+
+Si vous souhaitez utiliser Docker plutôt qu'AlwaysData ou un serveur local, voici la procédure complète :
+
+##### 1. Prérequis
+- Docker et Docker Compose installés sur votre machine
+- Les fichiers suivants dans le répertoire de votre projet :
+  - `Dockerfile`
+  - `docker-compose.yml`
+  - `init.sql`
+  - `.env`
+  - `.env.example`
+
+##### 2. Configuration du fichier `.env`
+
+Créez un fichier `.env` à la racine de votre projet (à côté de `index.php`) :
+
+```bash
+# NEVER COMMIT TO SOURCE CONTROL
+DB_HOST=mysql
+DB_PORT=3306
+DB_NAME=my_database
+DB_USER=admin
+DB_PASSWORD=password
+DB_ROOT_PASSWORD=rootpassword
+
+PMA_HOST=mysql
+PMA_PORT=8001
+PMA_USER=
+PMA_PASSWORD=password
+
+APP_PORT=8000
+```
+
+**IMPORTANT** :
+- `DB_HOST` doit être `mysql` (nom du service dans docker-compose), **PAS** `localhost`
+- Ce fichier **NE DOIT JAMAIS** être commité dans Git (ajoutez-le au `.gitignore`)
+
+##### 3. Modification de `config.php` pour lire depuis `.env`
+
+Votre fichier `config.php` doit lire les variables depuis le fichier `.env` :
+
+```php
+<?php
+// Charge les variables d'environnement depuis le fichier .env
+// QUI NE DOIT PAS ETRE COMMIT
+$env = parse_ini_file(__DIR__ . '/.env');
+
+// Configuration de la base de données
+define('DB_HOST', $env['DB_HOST']);
+define('DB_USER', $env['DB_USER']);
+define('DB_PASS', $env['DB_PASSWORD']);
+define('DB_NAME', $env['DB_NAME']);
+
+?>
+```
+
+##### 4. Fichier `Dockerfile`
+
+Créez un `Dockerfile` à la racine du projet :
+
+```dockerfile
+FROM php:8.5-apache
+
+# Install mysqli extension
+RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
+
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html/
+
+# Expose port 80
+EXPOSE 80
+```
+
+##### 5. Fichier `docker-compose.yml`
+
+```yaml
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: tdtp_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASSWORD}'
+      MYSQL_DATABASE: '${DB_NAME}'
+      MYSQL_USER: '${DB_USER}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - tdtp_network
+
+  php:
+    build: .
+    container_name: tdtp_php
+    restart: always
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - tdtp_network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: tdtp_phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: '${PMA_HOST}'
+      PMA_USER: '${DB_USER}'
+      PMA_PASSWORD: '${DB_PASSWORD}'
+    ports:
+      - "${PMA_PORT:-8001}:80"
+    depends_on:
+      - mysql
+    networks:
+      - tdtp_network
+
+volumes:
+  mysql_data:
+
+networks:
+  tdtp_network:
+    driver: bridge
+```
+
+##### 6. Fichier `init.sql`
+
+Ce fichier initialise la base de données au premier lancement :
+
+```sql
+-- Grant CREATE DATABASE privilege to the user
+GRANT CREATE ON *.* TO 'admin'@'%';
+FLUSH PRIVILEGES;
+
+-- Create database if not exists - **MUST** match the DB_NAME in .env
+CREATE DATABASE IF NOT EXISTS my_database CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE my_database;
+
+-- Create Users table
+CREATE TABLE IF NOT EXISTS Users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    login VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create Post table
+CREATE TABLE IF NOT EXISTS Post (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    user_id INT,
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert sample users
+INSERT INTO Users (login, password) VALUES
+    ('admin', 'admin123'),
+    ('defaut', 'password'),
+    ('user1', 'test123');
+
+-- Insert sample posts
+INSERT INTO Post (title, body, date, user_id) VALUES
+    ('Premier article', 'Ceci est le contenu du premier article de blog.', '2024-01-15 10:00:00', 1),
+    ('Deuxième article', 'Voici un autre article intéressant.', '2024-01-16 14:30:00', 1),
+    ('Article sur PHP', 'PHP est un langage de programmation côté serveur.', '2024-01-17 09:15:00', 2);
+```
+
+##### 7. Commandes Docker
+
+**Démarrage initial :**
+```bash
+# Construire les images
+docker compose build
+
+# Démarrer les conteneurs
+docker compose up -d
+```
+
+**Arrêter les conteneurs :**
+```bash
+docker compose down
+```
+
+**Arrêter ET supprimer les volumes (base de données) :**
+```bash
+docker compose down -v
+```
+
+**Reconstruire après modification du Dockerfile :**
+```bash
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+**Voir les logs :**
+```bash
+# Tous les services
+docker compose logs
+
+# Un service spécifique
+docker compose logs php
+docker compose logs mysql
+
+# Suivre les logs en temps réel
+docker compose logs -f php
+```
+
+**Vérifier l'état des conteneurs :**
+```bash
+docker compose ps
+```
+
+**Exécuter des commandes dans un conteneur :**
+```bash
+# Vérifier la version PHP
+docker exec tdtp_php php -v
+
+# Accéder au shell du conteneur
+docker exec -it tdtp_php bash
+```
+
+##### 8. Accès aux services
+
+Une fois les conteneurs démarrés :
+- **Application PHP** : http://localhost:8000
+- **phpMyAdmin** : http://localhost:8001
+- **MySQL** : localhost:3306 (depuis votre machine hôte)
+
+##### 9. Problèmes courants
+
+**Erreur "No such file or directory" avec mysqli :**
+- Vérifiez que `DB_HOST=mysql` dans `.env` (PAS `localhost`)
+- Le nom `mysql` correspond au nom du service dans `docker-compose.yml`
+
+**La base de données n'est pas initialisée :**
+- Le fichier `init.sql` ne s'exécute que lors de la première création du volume
+- Pour réinitialiser : `docker-compose down -v` puis `docker-compose up -d`
+
+**Modifications du Dockerfile non prises en compte :**
+- Utilisez `docker-compose build --no-cache` pour forcer la reconstruction
+
+**Port déjà utilisé :**
+- Modifiez `APP_PORT` ou `DB_PORT` dans `.env`
+- Ou arrêtez le service qui utilise déjà ce port
+
+**Permission denied :**
+- Sur Linux, vous devrez peut-être ajuster les permissions : `sudo chown -R $USER:$USER .`
+
+##### 10. Ajout au `.gitignore`
+
+N'oubliez pas d'ajouter ces lignes à votre `.gitignore` :
+
+```
+.env
+config.php
+```
 
