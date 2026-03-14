@@ -9,9 +9,9 @@ mathjax: true
 # TD 2 -- Interrogation de services Web REST
 
 
-L'objectif de ce TD est d'intégrer l'utilisation de services web REST, publiés souvent sous forme d'API, dans l'architecture de l'application "Annonces" développée en PHP dans les TD/TP précédents.
+L'objectif de ce TD est d'intégrer l'utilisation de services web REST, publiés souvent sous forme d'API, dans l'architecture de l'application "Annonces" développée en PHP dans les TD/TP précédents. Si vous n'avez pas une version fonctionnelle de cette application, vous pouvez utiliser l'archive mise à disposition sur le cours Ametice (section "Ressources").
 
-Dans un premier temps, nous allons  intégrer dans l'application l'affichage d'entreprises proposant de l'alternance en informatique. Ces informations sont publiées sous forme d'API par la Direction Interministérielle du Numérique (DINUM). Dans un second temps, nous allons ajouter dans notre application l'affichage des annonces d'emploi en informatique disponibles à Pôle Emploi.
+Dans un premier temps, nous allons  intégrer dans l'application l'affichage d'entreprises proposant de l'alternance en informatique. Ces informations sont publiées sous forme d'API par la Direction Interministérielle du Numérique (DINUM). Dans un second temps, nous allons ajouter dans notre application l'affichage des annonces d'emploi en informatique disponibles à France Travail.
 
 
 Le diagramme de classes suivant représente l'architecture de l'application à la fin du TD.
@@ -211,7 +211,7 @@ L'affichage des informations sur les entreprises susceptibles d'offrir des contr
   <ul>
     <li><a href="/index.php">Acceuil</a></li>
     <li><a href="/index.php/annonces">Annonces IUT</a></li>
-    <li><a href="/index.php/annoncesAlternance">Alternance - Pôle Emploi</a></li>
+    <li><a href="/index.php/annoncesAlternance">Alternance - France Travail</a></li>
     <li><a href="/index.php/logout">Déconnexion</a></li>*
   </ul>
 </nav>
@@ -229,14 +229,49 @@ Dans `index.php`, le nom de ce fichier est passé en paramètre des instances de
 
 
 
-## Partie 2 - Afficher les annonces d'emploi de Pôle Emploi
+## Partie 2 - Afficher les annonces d'emploi de France Travail
 
-Dans cette seconde partie, nous allons ajouter dans notre application l'affichage des annonces disponibles à Pôle Emploi. Pour cela, nous allons consommer l'[API Offres d'emploi](https://francetravail.io/data/api/offres-emploi?tabgroup-api=presentation&doc-section=api-doc-section-caracteristiques). Contrairement à la première API, il faut être au préalable enregistré sur le site Pôle Emploi pour utiliser ces données. Il faut ensuite identifier son application, et  souscrire à une des API publiées pour obtenir un identifiant ainsi qu'une clé secrète. Par ailleurs, il est nécessaire de générer un jeton ("access token", encore appelé "bearer token") avant de pouvoir effectuer une requête. L'ensemble de la procédure est décrit dans la [documentation technique de cette API](https://francetravail.io/data/documentation).
+Dans cette seconde partie, nous allons ajouter dans notre application l'affichage des annonces disponibles à France Travail. Pour cela, nous allons consommer l'[API Offres d'emploi](https://francetravail.io/data/api/offres-emploi?tabgroup-api=presentation&doc-section=api-doc-section-caracteristiques). Contrairement à la première API, il faut être au préalable enregistré sur le site France Travail pour utiliser ces données. Il faut ensuite identifier son application, et  souscrire à une des API publiées pour obtenir un identifiant ainsi qu'une clé secrète. Par ailleurs, il est nécessaire de générer un jeton ("access token", encore appelé "bearer token") avant de pouvoir effectuer une requête. L'ensemble de la procédure est décrit dans la [documentation technique de cette API](https://francetravail.io/data/documentation).
+
+L'API de France Travail nécessite d'enregistrer l'URL de son application avant de pouvoir être interrogée. Les URL locales n'étant pas acceptée, il faudra donc déployer votre application sur un serveur externe dans cette partie. Nous utiliserons AlwaysData.
+
+### 2.0 - Changement de serveur web et paramétrage de PhpStorm
+
+La première étape consiste donc à paramétrer AlwaysData et PhPStorm afin de pouvoir déployer et tester automatiquement l'application sur le site d'AlwaysData.
 
 
-### 2.1 - Créer un compte sur l'API Pôle Emploi et enregistrer son application
+Si ce n'est pas déjà fait, il faut tout d'abord créer un compte (gratuit) chez AlwaysData en remplissant [ce formulaire](https://www.alwaysdata.com/fr/inscription/?d). Une fois votre espace créé, AlwaysData associe un serveur web et une base de données à votre compte. L'URL du serveur web est de la forme `[compte].alwaysdata.net`.
+ 
+Vous allez ensuite créer un compte SSH/SFTP pour pouvoir uploader le code de l'application. 
+Le paramétrage des comptes et l'adresse de l'hôte peuvent être trouvés dans l'onglet `Accès distant > SSH/SFTP` de votre interface d’administration (menu de gauche). Notez que l'adresse est de la forme `ssh-[compte].alwaysdata.net`.
 
-La première étape consiste donc à [créer son espace sur le site pole-emploi.io](https://francetravail.io/inscription).
+<img src="td1-img/admin-panel_ssh-users-list.fr.png" width="800px"/>
+
+
+Une fois votre projet ouvert dans PhpStorm, il faut ensuite définir les modalités de déploiement de l'application sur le serveur d'AlwaysData. Ces paramètres se situent dans les `Settings` du projet, dans la section `Build, Execution, Deployment > Deployment`. Vous ajouterez un nouveau serveur SFTP (`+`).
+
+<img src="td2-img/phpstorm-deployment-settings.png" width="600px">
+
+Le nom donné à ce serveur sera par exemple `Annonces AlwaysData`. Il faudra sélectionner une connexion en `SFTP` (et non FTP) pour le transfère sécuriser des fichiers entre le répertoire local et le serveur. Pour cela, il faudra configurer les paramètres de connexions SSH (`SSH configuration`), en indiquant le nom de l'hôte (`ssh-[compte].alwaysdata.net`), le nom du compte, et son mot de passe. 
+
+
+<img src="td1-img/phpstorm-ssh.png" width="600px">
+
+Pour vérifier que tout est correct, il suffit de tester la connexion (`Test Connection`). Une fois que la configuration SSH est finie, il faut définir le répertoire par défaut du projet sur le serveur (`/home/[compte]/www/`)  ainsi que l'URL du serveur (`htttps://[compte].alwaysdata.net/`). Si vous souhaitez que votre application soit dans un sous répertoire (p.ex. `/annonces/`), il vous faut ajouter le `Mapping` correspondant.
+
+<img src="td2-img/phpstorm-mappings.png" width="600px">
+
+Pour que le code fait en local soit uploadé sur le serveur AlwaysData, il vous faudra utiliser les fonctionnalités de déploiement de PhpStorm. Elles se situent dans le menu `Tools > Deployment`. Il est possible de faire cela manuellement en uploadant un fichier après chaque modification (`Upload to Annonces AlwaysData`) ou d'automatiser l'upload en sélectionnant `Automatic Upload`. 
+
+<img src="td2-img/phpstorm-deployment.png" width="600px">
+
+Pour finir, il vous faudra aussi ajouter une nouvelle configuration d'exécution pour que PhpStorm ouvre directement dans votre navigateur l'application sur le serveur d'AlwaysData (et non sur votre serveur local).
+
+<img src="td2-img/phpstorm-runtime-config.png" width="600px">
+
+### 2.1 - Créer un compte sur l'API France Travail et enregistrer son application
+
+Il faut ensuite [créer son espace sur le site pole-emploi.io](https://francetravail.io/inscription).
 
 <img src="td2-img/2-creerCompte.png" width="800px"/>
 
@@ -248,7 +283,7 @@ Lorsque l'application est enregistrée, le site vous affiche l'identifiant et la
 
 <img src="td2-img/2-monAppli.png" width="800px"/>
 
-Avant d'intégrer cela dans notre code, il faut encore ajouter des API dans la liste des API autorisées pour notre application. Nous allons ajouter l'API "Offres d'emploi", qui permet d'accéder à tout moment et en temps réel à l’ensemble des offres d’emploi disponibles sur le site de Pôle emploi. A ce niveau, la plateforme permet de visualiser la [documentation technique de cette API](https://francetravail.io/data/api/offres-emploi?tabgroup-api=documentation&doc-section=api-doc-section-rechercher-par-crit%C3%A8res) en particulier, et donc de voir comment accéder et utiliser cette ressource (URI, paramètre des requêtes, etc.). Gardez cette fenêtre ouverte car elle vous sera utile par la suite.
+Avant d'intégrer cela dans notre code, il faut encore ajouter des API dans la liste des API autorisées pour notre application. Nous allons ajouter l'API "Offres d'emploi", qui permet d'accéder à tout moment et en temps réel à l’ensemble des offres d’emploi disponibles sur le site de France Travail. A ce niveau, la plateforme permet de visualiser la [documentation technique de cette API](https://francetravail.io/data/api/offres-emploi?tabgroup-api=documentation&doc-section=api-doc-section-rechercher-par-crit%C3%A8res) en particulier, et donc de voir comment accéder et utiliser cette ressource (URI, paramètre des requêtes, etc.). Gardez cette fenêtre ouverte car elle vous sera utile par la suite.
 
 <img src="td2-img/2-docAPI.png" width="800px"/>
 
@@ -402,7 +437,7 @@ Nous en profitons aussi pour définir `Post.login` comme clé étrangère de `Us
 
 ### 3.2 - Créer le formulaire de saisie d'une nouvelle annonce
 
-Nous pouvons maintenant revenir au code de notre application dans PhpStorm. Nous commençons par rapidement modifier le menu de notre interface graphique pour que le nom des différentes sections soit plus parlant. Pour faire cela, nous allons dans le fichier `layoutLogged.html` et renommons "Annonces" en "Annonces IUT", "Alternance" en "Alternance- Pôle Emploi", et "Emploi" en "Jobs - Pôle Emploi". Grâce à notre architecture, cette modification est appliquée sur toutes les fenêtres ("connectées") de notre application. 
+Nous pouvons maintenant revenir au code de notre application dans PhpStorm. Nous commençons par rapidement modifier le menu de notre interface graphique pour que le nom des différentes sections soit plus parlant. Pour faire cela, nous allons dans le fichier `layoutLogged.html` et renommons "Annonces" en "Annonces IUT", "Alternance" en "Alternance- France Travail", et "Emploi" en "Jobs - France Travail". Grâce à notre architecture, cette modification est appliquée sur toutes les fenêtres ("connectées") de notre application. 
 
 Nous allons maintenant ajouter les classes nécessaires à notre nouveau cas utilisation "ajouter une annonce".  Nous commençons par créer le formulaire de création d'annonce. Nous créons donc une classe `ViewCreateAnnonce` héritant de `View`, et ajoutons la construction de notre formulaire de saisie d'annonce dans le constructeur. L'affichage sera effectué par la méthode `display` héritée de la classe `View` et utilisant les champs `title` et `body` initialisés dans ce constructeur de `ViewCreateAnnonce`. 
 
