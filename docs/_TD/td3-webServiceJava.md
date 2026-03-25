@@ -38,7 +38,7 @@ Dans la fenêtre de création du projet, on adapte aussi le nom du projet, et le
 
 <img src="td3-img/1-newProject-sdk21.png" width="600px"/>
 
-Dans la liste des dépendances qui suit, on laisse les dépendances par défaut (i.e. `CDI`, `JAX-RS` et `Servlet`) et on ajoute les dépendances à `JSON-B`,et `JSON-P`.  Puis, on créé le projet. 
+Dans la liste des dépendances qui suit, on laisse les dépendances par défaut (i.e. `CDI`, `JAX-RS` et `Servlet`) et on ajoute les dépendances à `JSON-B` et `JSON-P`.  Puis, on créé le projet. 
 
 A cette étape, il faut encore configurer le serveur d'applications GlassFish, et définir une configuration d'exécution,  **comme indiqué dans le tutoriel**. 
 Avant cela, il faut installer le `plugin GlassFish` dans IntelliJ à partir du panneau de configuration du projet, i.e. aller dans `Settings` (File > Settings...) et sélectionner `Plugins`.
@@ -61,6 +61,10 @@ Il faut aussi noter l'URL utilisée pour tester le service : `http://localhost:8
 Une fois la configuration finalisée, vous pouvez  exécuter ce service ("run") et voir son résultat suite à une requête HTTP GET. Il s'agit d'un simple texte "Hello, World!".
 
 <img src="td3-img/1-helloWorld.png" width="400px"/>
+
+
+Si vous travaillez sur votre machine personnelle, vous pouvez avoir des erreurs à ce stade. Il y a généralement deux causes principales. La première est liée au port utilisé par le serveur GlassFish (le port 8080 par défaut). En fonction des applications installées sur votre machine, ce port peut déjà être utilisé. Dans ce cas, il faut simplement changer la configuration de GlassFish pour utiliser un autre port. Pour cela, il faut modifier le fichier texte `domain.xml` qui se situe dans le sous-répertoire `/glassfish/domains/domain1/` de votre installation. Il faut plus particulièrement changer le port (p.ex. en 8282) du `network-listener` correspondant. La deuxième cause d'erreur est généralement liée au `path` de votre JDK (OpenJDK 21 Temurin dans ce TD). Sous Windows notamment, GlassFish peut ne pas trouver ce chemin vers votre JDK. Il faut donc le préciser dans le fichier `asenv.bat` (à ouvrir avec un éditeur de texte) qui se situe dans le répertoire `glassfish/config/` de votre installation. A la fin de ce fichier, vous devez ajouter  la ligne `set AS_JAVA=<your_path>`, où `<your_path>` est à remplacer par le chemin vers votre JDK (sous Windows, il est par exemple de la forme `C:\Users\<account>\.jdks\temurin-21.0.10 `).
+
 
  Veuillez vous référer au tutoriel d'IntelliJ pour avoir une description plus détaillée des principaux fichiers du projet. 
 
