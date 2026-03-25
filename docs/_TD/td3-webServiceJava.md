@@ -38,7 +38,7 @@ Dans la fenêtre de création du projet, on adapte aussi le nom du projet, et le
 
 <img src="td3-img/1-newProject-sdk21.png" width="600px"/>
 
-Dans la liste des dépendances qui suit, on laisse les dépendances par défaut (i.e. `CDI`, `JAX-RS` et `Servlet`) et on ajoute les dépendances à `JSON-B`, `JSON-P` et `JPA`.  Puis, on créé le projet. 
+Dans la liste des dépendances qui suit, on laisse les dépendances par défaut (i.e. `CDI`, `JAX-RS` et `Servlet`) et on ajoute les dépendances à `JSON-B`,et `JSON-P`.  Puis, on créé le projet. 
 
 A cette étape, il faut encore configurer le serveur d'applications GlassFish, et définir une configuration d'exécution,  **comme indiqué dans le tutoriel**. 
 Avant cela, il faut installer le `plugin GlassFish` dans IntelliJ à partir du panneau de configuration du projet, i.e. aller dans `Settings` (File > Settings...) et sélectionner `Plugins`.
