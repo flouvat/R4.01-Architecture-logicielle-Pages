@@ -28,11 +28,15 @@ La troisième application appelée `reservation` gérera les réservations de li
 
 Pour cette étape, nous allons simplement suivre le [tutoriel "Your first RESTful web service"](https://www.jetbrains.com/help/idea/creating-and-running-your-first-restful-web-service.html?section=GlassFish) proposé sur le site de IntelliJ. 
 
-**Attention**, il faut télécharger le [serveur GlassFish (**Web Profile**)](https://glassfish.org/download) avant de commencer ce tutoriel (prérequis). Une fois l'archive téléchargée, il suffit de la décompresser pour pouvoir utiliser le serveur d'applications.
+**Attention**, il faut télécharger le [serveur GlassFish (**Web Profile, version 7.0.25**)](https://download.eclipse.org/ee4j/glassfish/web-7.0.25.zip) avant de commencer ce tutoriel (prérequis). Une fois l'archive téléchargée, il suffit de la décompresser pour pouvoir utiliser le serveur d'applications.
 
-Dans la fenêtre de création du projet, on adapte aussi le nom du projet, et le groupe associé, à nos besoins. Notre projet s'appelle `book` et il est associé au groupe `fr.univ-amu.iut`. IntelliJ vous affiche potentiellement des alertes en bas de la fenêtre (en rouge). Il faut les "fixer" comme indiqué dans le tutoriel. 
+Dans la fenêtre de création du projet, on adapte aussi le nom du projet, et le groupe associé, à nos besoins. Notre projet s'appelle `book` et il est associé au groupe `fr.univ-amu.iut`. Il faut ensuite choisir le JDK utilisé par le projet. Dans notre contexte, nous allons utiliser la version 21 de l'OpenJDK Temurin. Pour cela, il faut cliquer sur la liste déroulante associée au JDK, puis sur `Download JDK`. Dans la fenêtre qui s'ouvre, il faut ensuite sélectionner la version 21 du "vendeur" `Eclipse Temurin`. Une fois que ce JDK est téléchargé, il suffit de passer à l'étape suivante `Next`. 
 
-<img src="td3-img/1-newProject.png" width="600px"/>
+ IntelliJ vous affiche potentiellement des alertes en bas de la fenêtre (en rouge). Il faut les "fixer" comme indiqué dans le tutoriel. 
+
+
+
+<img src="td3-img/1-newProject-sdk21.png" width="600px"/>
 
 Dans la liste des dépendances qui suit, on laisse les dépendances par défaut (i.e. `CDI`, `JAX-RS` et `Servlet`) et on ajoute les dépendances à `JSON-B`, `JSON-P` et `JPA`.  Puis, on créé le projet. 
 
@@ -43,13 +47,13 @@ Avant cela, il faut installer le `plugin GlassFish` dans IntelliJ à partir du p
 
 Toujours dans le panneau de configuration du projet, il faut maintenant définir le serveur d'applications. Pour cela, il faut sélectionner `Build, Execution, Deployment | Application Servers`, cliquer sur `+` et choisir  `Glassfish Server`. Il faut ensuite  indiquer le répertoire où vous avez décompressé GlassFish.
 
-<img src="td3-img/1-configServer.png" width="500px"/>
+<img src="td3-img/1-configServer-glassfish7.0.25.png" width="500px"/>
 
-Pour définir la configuration d'exécution, il faut sélectionner `Run | Edit Configurations`, cliquer sur `+`, étendre le noeud `Glassfish Server ` et sélectionner `Local`. Dans la section `Before launch` en bas de la fenêtre, nous allons juste ajouter (+) un `Build Artifacts` > `book:war`. Cette option permet de générer à chaque construction un fichier archive WAR (Web application ARchive).  Ce fichier WAR est l'équivalent d'un fichier JAR pour les applications web. Il regroupe tous les fichiers de l'application  dans un seul et même fichier. 
+Pour définir la configuration d'exécution, il faut sélectionner `Run | Edit Configurations`, cliquer sur `+`, étendre le noeud `Glassfish Server ` et sélectionner `Local`. Dans la section `Before launch` en bas de la fenêtre, nous allons juste ajouter (+) un `Build Artifacts` > `book:war`. Cette option permet de générer à chaque construction un fichier archive WAR (Web application ARchive).  Ce fichier WAR est l'équivalent d'un fichier JAR pour les applications web. Il regroupe tous les fichiers de l'application  dans un seul et même fichier. Il faut ensuite régler le déploiement de l'application sur le serveur Glassfish après chaque compilation. Pour cela, il faut aller dans l'onglet `Deployment` et ajouter avec `+` l'artefact `book:war`.
 
-<img src="td3-img/1-configSettings.png" width="400px"/>
+<img src="td3-img/1-configSettings-glassfish7.0.25.png" width="400px"/>
 
-Par défaut lors du déploiement, IntelliJ transfert l'application sous forme de répertoire "war exploded" au serveur d'applications. Comme indiqué dans la [documentation d'IntelliJ](https://www.jetbrains.com/help/idea/configure-web-app-deployment.html#:~:text=A%20Web%20application%20can%20be,contains%20all%20the%20required%20files.), cela consiste à simplement transférer le contenu du fichier WAR  de manière décompressée, et non dans l'archive   construite par Java, ce qui permet de gagner en rapidité d'exécution.
+IntelliJ permet la construction et le déploiement de l'application sous forme de répertoire "war exploded" au serveur d'applications. Comme indiqué dans la [documentation d'IntelliJ](https://www.jetbrains.com/help/idea/configure-web-app-deployment.html#:~:text=A%20Web%20application%20can%20be,contains%20all%20the%20required%20files.), cela consiste à simplement transférer le contenu du fichier WAR  de manière décompressée, et non dans l'archive   construite par Java, ce qui permet de gagner en rapidité d'exécution.
 
 Il faut aussi noter l'URL utilisée pour tester le service : `http://localhost:8080/book-1.0-SNAPSHOT/api/hello-world`. On remarque que le nom de l'application `book` est suivi par `-1.0-SNAPSHOT`. Cette extension est rajoutée par [Maven](https://maven.apache.org/), l'outil de gestion de projets Java utilisé ici. Dans les conventions de nommage de Maven, cela indique que la version actuelle de l'application est une pré-version de la version 1 de l'application (i.e. une version en cours de développement). A la différence d'une "release", le code d'un "SNAPSHOT" peut être mis à jours, et donc Maven recherche ces mises à jours et les intègrent lors de la construction et du déploiement de l'application (cf. la[ documentation de Maven](https://maven.apache.org/guides/getting-started/index.html#What_is_a_SNAPSHOT_version)  pour plus d'infromations). 
 
