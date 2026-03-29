@@ -1,0 +1,69 @@
+{
+  "commandes": [
+    {
+      "id": 1,
+      "abonneId": 3,
+      "dateCommande": "2025-03-20T14:32:00",
+      "adresseLivraison": "7 avenue du Prado, 13008 Marseille",
+      "dateLivraison": "2025-04-01",
+      "lignes": [
+        {
+          "menuId": 1,
+          "menuNom": "Menu Provence",
+          "quantite": 2,
+          "prixUnitaire": 22.5,
+          "prixLigne": 45
+        },
+        {
+          "menuId": 3,
+          "menuNom": "Menu Gourmand",
+          "quantite": 1,
+          "prixUnitaire": 32,
+          "prixLigne": 32
+        }
+      ],
+      "prixTotal": 77
+    },
+    {
+      "id": 2,
+      "abonneId": 1,
+      "dateCommande": "2025-03-21T09:15:00",
+      "adresseLivraison": "12 rue des Lilas, 13001 Marseille",
+      "dateLivraison": "2025-04-02",
+      "lignes": [
+        {
+          "menuId": 2,
+          "menuNom": "Menu Léger",
+          "quantite": 3,
+          "prixUnitaire": 16,
+          "prixLigne": 48
+        }
+      ],
+      "prixTotal": 48
+    },
+    {
+      "id": 3,
+      "abonneId": 4,
+      "dateCommande": "2025-03-22T18:00:00",
+      "adresseLivraison": "45 boulevard Michelet, 13009 Marseille",
+      "dateLivraison": "2025-04-01",
+      "lignes": [
+        {
+          "menuId": 4,
+          "menuNom": "Menu Traditionnel",
+          "quantite": 1,
+          "prixUnitaire": 17,
+          "prixLigne": 17
+        },
+        {
+          "menuId": 1,
+          "menuNom": "Menu Provence",
+          "quantite": 2,
+          "prixUnitaire": 22.5,
+          "prixLigne": 45
+        }
+      ],
+      "prixTotal": 62
+    }
+  ]
+}

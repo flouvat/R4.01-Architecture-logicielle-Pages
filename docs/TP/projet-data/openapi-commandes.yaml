@@ -1,0 +1,258 @@
+openapi: 3.0.3
+info:
+  title: API Commandes
+  description: >
+    Gestion des commandes passées par les abonnés.
+    Ce composant consomme l'API Menus pour valider les menus commandés
+    et en calculer le prix au moment de la commande.
+    Consommée par l'IHM.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8082/commandes/api
+    description: Serveur de développement local
+
+tags:
+  - name: Commandes
+    description: Opérations CRUD sur les commandes
+
+paths:
+
+  /commandes:
+    get:
+      tags: [Commandes]
+      summary: Lister toutes les commandes
+      operationId: getAllCommandes
+      parameters:
+        - name: abonneId
+          in: query
+          required: false
+          description: Filtrer les commandes d'un abonné précis
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des commandes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Commande'
+
+    post:
+      tags: [Commandes]
+      summary: Valider une nouvelle commande
+      operationId: createCommande
+      description: >
+        Enregistre une commande. Le composant appelle l'API Menus pour vérifier
+        l'existence des menus et en récupérer le prix au moment de la commande.
+        La date de commande est enregistrée automatiquement côté serveur.
+        Le paiement s'effectuera à la livraison.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandeInput'
+            example:
+              abonneId: 3
+              adresseLivraison: "7 avenue du Prado, 13008 Marseille"
+              dateLivraison: "2025-04-01"
+              lignes:
+                - menuId: 1
+                  quantite: 2
+                - menuId: 3
+                  quantite: 1
+      responses:
+        '201':
+          description: Commande créée
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /commandes/1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commande'
+        '400':
+          description: Données invalides (date de livraison passée, quantité nulle…)
+        '404':
+          description: Abonné ou menu introuvable
+
+  /commandes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+
+    get:
+      tags: [Commandes]
+      summary: Obtenir une commande par son identifiant
+      operationId: getCommandeById
+      responses:
+        '200':
+          description: Commande trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commande'
+        '404':
+          description: Commande introuvable
+
+    put:
+      tags: [Commandes]
+      summary: Modifier une commande (adresse ou date de livraison)
+      operationId: updateCommande
+      description: >
+        Permet de modifier l'adresse ou la date de livraison.
+        La modification des lignes de commande n'est pas supportée :
+        il faut supprimer et recréer la commande.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandeUpdateInput'
+            example:
+              adresseLivraison: "3 rue Paradis, 13001 Marseille"
+              dateLivraison: "2025-04-03"
+      responses:
+        '200':
+          description: Commande mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commande'
+        '404':
+          description: Commande introuvable
+
+    delete:
+      tags: [Commandes]
+      summary: Annuler une commande
+      operationId: deleteCommande
+      responses:
+        '204':
+          description: Commande annulée
+        '404':
+          description: Commande introuvable
+
+components:
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+
+  schemas:
+
+    LigneCommande:
+      type: object
+      properties:
+        menuId:
+          type: integer
+          description: Identifiant du menu (FK vers API Menus)
+          example: 1
+        menuNom:
+          type: string
+          readOnly: true
+          description: Nom du menu au moment de la commande (snapshot)
+          example: "Menu Provence"
+        quantite:
+          type: integer
+          minimum: 1
+          example: 2
+        prixUnitaire:
+          type: number
+          format: double
+          readOnly: true
+          description: Prix du menu au moment de la commande (snapshot)
+          example: 17.50
+        prixLigne:
+          type: number
+          format: double
+          readOnly: true
+          description: prixUnitaire × quantite
+          example: 35.00
+
+    LigneCommandeInput:
+      type: object
+      required: [menuId, quantite]
+      properties:
+        menuId:
+          type: integer
+          example: 1
+        quantite:
+          type: integer
+          minimum: 1
+          example: 2
+
+    Commande:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 1
+        abonneId:
+          type: integer
+          description: Identifiant de l'abonné (FK vers API Plats et Utilisateurs)
+          example: 3
+        dateCommande:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Horodatage de validation, calculé côté serveur
+          example: "2025-03-20T14:32:00"
+        adresseLivraison:
+          type: string
+          example: "7 avenue du Prado, 13008 Marseille"
+        dateLivraison:
+          type: string
+          format: date
+          example: "2025-04-01"
+        lignes:
+          type: array
+          items:
+            $ref: '#/components/schemas/LigneCommande'
+        prixTotal:
+          type: number
+          format: double
+          readOnly: true
+          description: Somme des prixLigne, calculée côté serveur
+          example: 52.50
+
+    CommandeInput:
+      type: object
+      required: [abonneId, adresseLivraison, dateLivraison, lignes]
+      properties:
+        abonneId:
+          type: integer
+          example: 3
+        adresseLivraison:
+          type: string
+          example: "7 avenue du Prado, 13008 Marseille"
+        dateLivraison:
+          type: string
+          format: date
+          example: "2025-04-01"
+        lignes:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/LigneCommandeInput'
+
+    CommandeUpdateInput:
+      type: object
+      required: [adresseLivraison, dateLivraison]
+      properties:
+        adresseLivraison:
+          type: string
+          example: "3 rue Paradis, 13001 Marseille"
+        dateLivraison:
+          type: string
+          format: date
+          example: "2025-04-03"

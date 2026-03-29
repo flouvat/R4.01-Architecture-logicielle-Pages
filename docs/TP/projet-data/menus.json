@@ -1,0 +1,58 @@
+{
+  "menus": [
+    {
+      "id": 1,
+      "nom": "Menu Provence",
+      "createurId": 2,
+      "createurNom": "Martin",
+      "dateCreation": "2025-03-10",
+      "dateMiseAJour": "2025-03-12",
+      "plats": [
+        { "id": 1, "nom": "Salade niçoise", "prix": 8.5 },
+        { "id": 3, "nom": "Gratin dauphinois", "prix": 9 },
+        { "id": 7, "nom": "Mousse au chocolat", "prix": 5 }
+      ],
+      "prixTotal": 22.5
+    },
+    {
+      "id": 2,
+      "nom": "Menu Léger",
+      "createurId": 1,
+      "createurNom": "Dupont",
+      "dateCreation": "2025-03-11",
+      "dateMiseAJour": "2025-03-11",
+      "plats": [
+        { "id": 1, "nom": "Salade niçoise", "prix": 8.5 },
+        { "id": 5, "nom": "Tian de légumes", "prix": 7.5 }
+      ],
+      "prixTotal": 16
+    },
+    {
+      "id": 3,
+      "nom": "Menu Gourmand",
+      "createurId": 3,
+      "createurNom": "Bernard",
+      "dateCreation": "2025-03-14",
+      "dateMiseAJour": "2025-03-15",
+      "plats": [
+        { "id": 4, "nom": "Bouillabaisse", "prix": 15.5 },
+        { "id": 6, "nom": "Poulet rôti", "prix": 11 },
+        { "id": 8, "nom": "Tarte tropézienne", "prix": 5.5 }
+      ],
+      "prixTotal": 32
+    },
+    {
+      "id": 4,
+      "nom": "Menu Traditionnel",
+      "createurId": 2,
+      "createurNom": "Martin",
+      "dateCreation": "2025-03-18",
+      "dateMiseAJour": "2025-03-18",
+      "plats": [
+        { "id": 2, "nom": "Aïoli provençal", "prix": 12 },
+        { "id": 7, "nom": "Mousse au chocolat", "prix": 5 }
+      ],
+      "prixTotal": 17
+    }
+  ]
+}

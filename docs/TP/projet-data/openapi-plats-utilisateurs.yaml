@@ -1,0 +1,304 @@
+openapi: 3.0.3
+info:
+  title: API Plats et Utilisateurs
+  description: >
+    Gestion des plats proposés par l'entreprise de livraison de repas
+    et des abonnés inscrits. Consommée par le composant Menus et l'IHM.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/plats-utilisateurs/api
+    description: Serveur de développement local
+
+tags:
+  - name: Plats
+    description: Opérations CRUD sur les plats
+  - name: Utilisateurs
+    description: Opérations CRUD sur les abonnés
+
+paths:
+
+  # ─── PLATS ───────────────────────────────────────────────────────────────────
+
+  /plats:
+    get:
+      tags: [Plats]
+      summary: Lister tous les plats
+      operationId: getAllPlats
+      responses:
+        '200':
+          description: Liste des plats disponibles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Plat'
+              example:
+                - id: 1
+                  nom: "Salade niçoise"
+                  description: "Salade composée avec thon, olives, œufs durs et anchois"
+                  prix: 8.50
+                - id: 2
+                  nom: "Aïoli"
+                  description: "Plat provençal : légumes vapeur, morue et sauce aïoli"
+                  prix: 12.00
+
+    post:
+      tags: [Plats]
+      summary: Créer un nouveau plat
+      operationId: createPlat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatInput'
+            example:
+              nom: "Gratin dauphinois"
+              description: "Gratin de pommes de terre à la crème et à l'ail"
+              prix: 9.00
+      responses:
+        '201':
+          description: Plat créé
+          headers:
+            Location:
+              description: URI du plat créé
+              schema:
+                type: string
+                example: /plats/3
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plat'
+        '400':
+          description: Données invalides
+
+  /plats/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+
+    get:
+      tags: [Plats]
+      summary: Obtenir un plat par son identifiant
+      operationId: getPlatById
+      responses:
+        '200':
+          description: Plat trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plat'
+        '404':
+          description: Plat introuvable
+
+    put:
+      tags: [Plats]
+      summary: Remplacer un plat existant
+      operationId: updatePlat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatInput'
+      responses:
+        '200':
+          description: Plat mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plat'
+        '400':
+          description: Données invalides
+        '404':
+          description: Plat introuvable
+
+    delete:
+      tags: [Plats]
+      summary: Supprimer un plat
+      operationId: deletePlat
+      responses:
+        '204':
+          description: Plat supprimé
+        '404':
+          description: Plat introuvable
+
+  # ─── UTILISATEURS ────────────────────────────────────────────────────────────
+
+  /utilisateurs:
+    get:
+      tags: [Utilisateurs]
+      summary: Lister tous les abonnés
+      operationId: getAllUtilisateurs
+      responses:
+        '200':
+          description: Liste des abonnés
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Utilisateur'
+
+    post:
+      tags: [Utilisateurs]
+      summary: Inscrire un nouvel abonné
+      operationId: createUtilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UtilisateurInput'
+            example:
+              nom: "Dupont"
+              prenom: "Marie"
+              email: "marie.dupont@email.fr"
+              adresse: "12 rue des Lilas, 13001 Marseille"
+      responses:
+        '201':
+          description: Abonné créé
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /utilisateurs/1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+        '400':
+          description: Données invalides
+        '409':
+          description: Email déjà utilisé
+
+  /utilisateurs/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+
+    get:
+      tags: [Utilisateurs]
+      summary: Obtenir un abonné par son identifiant
+      operationId: getUtilisateurById
+      responses:
+        '200':
+          description: Abonné trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+        '404':
+          description: Abonné introuvable
+
+    put:
+      tags: [Utilisateurs]
+      summary: Modifier les informations d'un abonné
+      operationId: updateUtilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UtilisateurInput'
+      responses:
+        '200':
+          description: Abonné mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+        '404':
+          description: Abonné introuvable
+
+    delete:
+      tags: [Utilisateurs]
+      summary: Supprimer un abonné
+      operationId: deleteUtilisateur
+      responses:
+        '204':
+          description: Abonné supprimé
+        '404':
+          description: Abonné introuvable
+
+components:
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+
+  schemas:
+
+    Plat:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 1
+        nom:
+          type: string
+          example: "Salade niçoise"
+        description:
+          type: string
+          example: "Salade composée avec thon, olives, œufs durs et anchois"
+        prix:
+          type: number
+          format: double
+          example: 8.50
+
+    PlatInput:
+      type: object
+      required: [nom, description, prix]
+      properties:
+        nom:
+          type: string
+          example: "Gratin dauphinois"
+        description:
+          type: string
+          example: "Gratin de pommes de terre à la crème et à l'ail"
+        prix:
+          type: number
+          format: double
+          minimum: 0
+          example: 9.00
+
+    Utilisateur:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 1
+        nom:
+          type: string
+          example: "Dupont"
+        prenom:
+          type: string
+          example: "Marie"
+        email:
+          type: string
+          format: email
+          example: "marie.dupont@email.fr"
+        adresse:
+          type: string
+          example: "12 rue des Lilas, 13001 Marseille"
+
+    UtilisateurInput:
+      type: object
+      required: [nom, prenom, email, adresse]
+      properties:
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+          format: email
+        adresse:
+          type: string

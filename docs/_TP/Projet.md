@@ -54,7 +54,12 @@ Plusieurs services ont été préparés pour ce projet. Vous n'avez plus qu'à l
 | Menus                | 3004 | 4 menus                 |
 | Commandes            | 3005 | 3 commandes             |
 
-Les fichiers de données JSON, tout comme la description des endpoints (au format YAML), sont disponibles sur Ametice.
+Les fichiers de données JSON, tout comme la description des endpoints (au format YAML), sont disponibles ci-dessous:
+
+- [plats-utilisateurs.json](projet-data/plats-utilisateurs.json) et [openapi-plats-utilisateurs.yaml](projet-data/openapi-plats-utilisateurs.yaml)
+- [menus.json](projet-data/menus.json) et [openapi-menus.yaml](projet-data/openapi-menus.yaml)
+- [commandes.json](projet-data/commandes.json) et [openapi-commandes.yaml](projet-data/openapi-commandes.yaml)
+
 
 ### Faire tourner le mock en local avec `json-server`
 
