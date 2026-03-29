@@ -40,7 +40,7 @@ Le schéma suivant résume cette architecture:
 
 <img src="projet-img/architecture_livraison_repas.jpg" width="600px"/>
  
-## Tester son composant grâce à JSON-Server
+## Développer son composant grâce à JSON-Server
 
 Comme vous pouvez le constater, les API "Menus", "Commandes" et "IHM" dépendent d'autres composants. Afin de ne pas devoir attendre le développement des composants associés, vous pourrez utiliser le logiciel [JSON-Server](https://www.npmjs.com/package/json-server?activeTab=readme). Il permet  d'accélérer le prototypage de vos applications en imitant les APIs dont vous avez besoin, sans attendre que les autres membres du projet aient leurs endpoints opérationnels. Cet outil permet de créer un mock d'API REST en local en utilisant simplement un fichier JSON.
 
