@@ -66,7 +66,7 @@ Les fichiers de données JSON, tout comme la description des endpoints (au forma
 #### 1. Installer `json-server`
 
 ```bash
-npm install -g json-server
+npm install json-server
 ```
 
 #### 2. Lancer chaque service sur le port correspondant
@@ -74,15 +74,15 @@ npm install -g json-server
 Ouvrez trois terminaux (ou trois onglets) et lancez une commande dans chacun :
 
 ```bash
-json-server --watch plats-utilisateurs.json --port 3003
+npx json-server --watch plats-utilisateurs.json --port 3003
 ```
 
 ```bash
-json-server --watch menus.json --port 3004
+npx json-server --watch menus.json --port 3004
 ```
 
 ```bash
-json-server --watch commandes.json --port 3005
+npx json-server --watch commandes.json --port 3005
 ```
 
 Vos services sont maintenant disponibles sur `http://localhost:3003`, `http://localhost:3004` et `http://localhost:3005`.
